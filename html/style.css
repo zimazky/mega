@@ -1,0 +1,252 @@
+body {
+	font-family: Helvetica,Arial,sans-serif;
+	font-size: 12px;
+	background-color: #333333;
+	color: #bbbbbb;
+	text-align: center;
+}
+#pagewrap {
+	display: inline-block;
+	max-width: 540px;
+	text-align: left;
+	user-select: none;
+}
+#header {
+	width: 100%;
+	height: 48px;
+	vertical-align: top;
+}
+#header .left {
+	display: inline-block;
+}
+#title {
+	display: inline-block;
+	/*float: left;*/
+}
+#datetime {
+	display: inline-block;
+	float: right;
+}
+#date {
+	text-align: right;
+}
+#time {
+	font-size: 24px;
+	text-align: right;
+}
+/*Фон модального окна*/
+#modal {
+	display: none;
+	position: fixed;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	white-space: nowrap;
+	text-align: center;
+	background-color: rgba(0,0,0,0.4);
+	user-select: none;
+	animation-name: fadeIn;
+	animation-duration: 0.4s;
+}
+#modal-dialog {
+	position: fixed;
+	top: 100px;
+	background-color: #fefefe;
+	width: 400px;
+	left: 50%;
+	margin-left: -200px;
+	animation-name: slideIn;
+	animation-duration: 0.4s;
+}
+@keyframes fadeIn {
+	from {opacity: 0} 
+	to {opacity: 1}
+}
+@keyframes slideIn {
+	from {top: -300px; opacity: 0}
+	to {top: 100px; opacity: 1}
+}
+
+/* The Close Button */
+.close {
+	color: white;
+	float: right;
+	font-size: 28px;
+	font-weight: bold;
+}
+.close:hover,
+.close:focus {
+	color: #000;
+	text-decoration: none;
+	cursor: pointer;
+}
+.modal-header {
+	padding: 2px 16px;
+	background-color: #5cb85c;
+	color: white;
+	font-size: 15px;
+	font-weight: bold;
+}
+.modal-body {
+	padding: 10px 16px;
+	user-select: none;
+	}
+.modal-body span
+{
+	font-size: 28px;
+	font-weight: bold;
+	padding: 0 16px;
+	}
+#tc {
+	color: #000;
+}
+.plus {
+	color: #bbbbbb;
+}
+.plus:hover,
+.plus:focus {
+	color: #000;
+	text-decoration: none;
+	cursor: pointer;
+}
+.modal-footer {
+	padding: 5px 16px;
+	background-color: #5cb85c;
+	color: white;
+}
+.ok {
+	color: white;
+	font-size: 20px;
+	font-weight: bold;
+	padding: 0 16px;
+}
+.ok:hover,
+.ok:focus {
+	color: #000;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+
+
+#main {
+	direction: rtl;
+	text-align: left;
+}
+#diagrams {
+	display: inline-block;
+	vertical-align:top;
+	width:262px;
+	margin:0;
+	direction: ltr;
+}
+#controls {
+ 	display: inline-block;
+	vertical-align:top;
+	margin:0;
+	direction: ltr;
+}
+
+
+.button { 
+	display:inline-block;
+	border: 1px solid; 
+	border-radius: 3px; 
+	white-space: nowrap; 
+	padding: 3px 6px; 
+	margin: 0; 
+	cursor: pointer;
+}
+.button:active, .button.active, .button.active:hover { 
+	background-color: #F49B25; 
+	text-shadow: none; 
+	color: #fff; 
+}
+.button:hover { 
+	background-color: #fff; 
+	text-shadow: none; 
+	color: #000;
+}
+
+.diagrambox{
+	display:inline-block;
+	margin:0;
+}
+.diagrambox .header{
+	text-align: left;
+}
+.diagram {
+	position: relative; 
+	display: block; 
+	width: 100%;
+}
+.diagram canvas { 
+	border:1px solid;
+}
+
+.controlbox{
+	width: 262px;
+	margin:0 0 10px 0;
+}
+.controlbox .header{
+	background-color: #555555; 
+	padding:2px;
+	margin:0 0 5px 0;
+}
+.controlbox .button{
+	margin:0 5px 5px 0;
+}
+.controlbox .parameter{
+	display:inline-block;
+	margin:0 10px 5px 0;
+}
+.controlbox .name{
+	padding: 3px 0 0 0;
+}
+.controlbox .value{
+	font-size: 25px
+}
+
+/* Блок тестового вывода информации от контроллера */
+#controllerinfo {
+	word-wrap: break-word;
+}
+
+/* Анимация загрузки */
+#loading {
+	background-color: rgba(0,0,0,0);
+	width:50px;
+	height:50px;
+	border-radius:50%;
+	border:5px solid rgba(0,0,0,0);
+	border-top:5px solid rgb(0,183,229);
+	margin:0 auto;
+	animation:spin 1.5s infinite linear;
+}
+#loading::after {
+	content: "";
+	position: absolute;
+	top: 0; right: 0; bottom: 0; left: 0;
+	border-radius: inherit;
+	border:5px solid rgba(0,0,0,0);
+	border-top:5px solid rgb(0,183,229);
+	margin:-5px;
+	animation:spin 5.5s infinite linear;
+}
+@keyframes spin {
+	to { transform: rotate(360deg); }
+}
+
+/* smaller than 540
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+@media screen and (max-width: 540px) {
+
+	#pagewrap {
+		max-width: 262px;
+	}
+
+}
+

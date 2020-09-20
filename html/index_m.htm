@@ -1,0 +1,455 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arduino TermoController</title>
+<link href="style.css" rel="stylesheet">
+<script src="lib_m.js"></script>
+<script type="text/javascript">
+
+///////////////////////////////////////////////////////////////////////////////
+// Класс графика температуры зон контроллера
+///////////////////////////////////////////////////////////////////////////////
+class TemperatureDiagram extends Diagram{
+	constructor(zones, divid, width, height, timeinterval, marginleft=0, marginright=40, barwidth=0, barpadding=2) {
+		super(divid, width, height, timeinterval, marginleft, marginright, barwidth, barpadding);
+		this.zones = zones;// массив с зонами контроля
+	}
+	
+	//=========================================================================
+	// Функция отображения графиков
+	//=========================================================================
+	redraw(a) {
+		super.redraw();
+		var tmin = Number.MAX_VALUE, tmax = Number.MIN_VALUE;
+		var z = [];
+		for(var i=0; i<a.length; i++) {
+			z.push(a[i]);
+			tmin = (tmin<z[i].t.min)?tmin:z[i].t.min;
+			tmax = (tmax>z[i].t.max)?tmax:z[i].t.max;
+		}
+		// отрисовка шкалы по оси Y
+		this.graph.y_axis(this.marginleft,25,this.marginleft+this.width+this.marginright,this.height,tmin,tmax,18,'#666666');
+		// отрисовка подачи мощности и температуры
+		for(var i=0; i<this.zones.length; i++) {
+			if(this.zones[i].showpower) this.graph.stepped(this.marginleft,25,this.width,this.height,this.barw,this.barp,z[i].p.zdata,0,100,0,this.zones[i].pcolor);
+			this.graph.stepped(this.marginleft,25,this.width,this.height,this.barw,this.barp,z[i].t.zdata,tmin,tmax,0,this.zones[i].tcolor);
+		}
+	}
+}
+///////////////////////////////////////////////////////////////////////////////
+// Класс графика влажности зон контроллера
+///////////////////////////////////////////////////////////////////////////////
+class HumidityDiagram extends Diagram{
+	constructor(zones, divid, width, height, timeinterval, marginleft=0, marginright=40, barwidth=0, barpadding=2) {
+		super(divid, width, height, timeinterval, marginleft, marginright, barwidth, barpadding);
+		this.zones = zones;// массив с зонами контроля
+	}
+	
+	//=========================================================================
+	// Функция отображения графиков
+	//=========================================================================
+	redraw(a) {
+		super.redraw();
+		var hmin = Number.MAX_VALUE, hmax = Number.MIN_VALUE;
+		var z = [];
+		for(var i=0; i<a.length; i++) {
+			z.push(a[i]);
+			hmin = (hmin<z[i].h.min)?hmin:z[i].h.min;
+			hmax = (hmax>z[i].h.max)?hmax:z[i].h.max;
+		}
+		// отрисовка шкалы по оси Y
+		this.graph.y_axis(this.marginleft,25,this.marginleft+this.width+this.marginright,this.height,hmin,hmax,18,'#666666');
+		// отрисовка подачи мощности и температуры
+		for(var i=0; i<this.zones.length; i++) {
+			if(this.zones[i].showpower) this.graph.stepped(this.marginleft,25,this.width,this.height,this.barw,this.barp,z[i].p.zdata,0,100,0,this.zones[i].pcolor);
+			this.graph.stepped(this.marginleft,25,this.width,this.height,this.barw,this.barp,z[i].h.zdata,hmin,hmax,0,this.zones[i].hcolor);
+		}
+	}
+}
+///////////////////////////////////////////////////////////////////////////////
+// Класс графика абсолютной влажности зон контроллера
+///////////////////////////////////////////////////////////////////////////////
+class AbsoluteHumidityDiagram extends Diagram{
+	constructor(zones, divid, width, height, timeinterval, marginleft=0, marginright=40, barwidth=0, barpadding=2) {
+		super(divid, width, height, timeinterval, marginleft, marginright, barwidth, barpadding);
+		this.zones = zones;// массив с зонами контроля
+	}
+	//=========================================================================
+	// Функция рассчета абсолютной влажности на заданном регулярном датасете
+	//=========================================================================
+	abshumiditycalc(z) {
+		var fmin = Number.MAX_VALUE, fmax = Number.MIN_VALUE;
+		var f = [];
+		for(var i=0;i<z.h.zdata.length;i++) {
+			var flag = z.t.zdata[i].flag;
+			var p = 0., t = z.t.zdata[i].value;
+			if( flag == 0 ) f.push({flag:0});
+			else {
+				// определение давления насыщенного пара, кПа
+				if(t<0) { p = Math.exp((18.74*t-115.72)/(233.77+0.881*t)); }
+				else { p = Math.exp((16.57*t-115.72)/(233.77+0.997*t)); }
+				// определение плотности насыщенного пара, г/м3
+				var ro = 1000000.*p/(461.52*(273.15+t));
+				// определение плотности пара (абсолютная влажность), г/м3
+				ro *= z.h.zdata[i].value*0.01;
+				fmin = (fmin<ro)?fmin:ro;
+				fmax = (fmax>ro)?fmax:ro;
+				f.push({flag:flag,value:ro});
+			}
+		}
+		//console.log(z,f);
+	return {zdata:f, min:fmin, max:fmax};
+	}
+	//=========================================================================
+	// Функция отображения графиков
+	//=========================================================================
+	redraw(a) {
+		super.redraw();
+		var hmin = Number.MAX_VALUE, hmax = Number.MIN_VALUE;
+		var z = [];
+		for(var i=0; i<this.zones.length; i++) {
+			z.push(this.abshumiditycalc(a[i]));
+			hmin = (hmin<z[i].min)?hmin:z[i].min;
+			hmax = (hmax>z[i].max)?hmax:z[i].max;
+		}
+		// отрисовка шкалы по оси Y
+		this.graph.y_axis(this.marginleft,25,this.marginleft+this.width+this.marginright,this.height,hmin,hmax,18,'#666666');
+		// отрисовка подачи мощности и температуры
+		for(var i=0; i<this.zones.length; i++) {
+			this.graph.stepped(this.marginleft,25,this.width,this.height,this.barw,this.barp,z[i].zdata,hmin,hmax,0,this.zones[i].hcolor);
+		}
+	}
+}
+
+function YYYYMMDDHHMMSS(unixtime) {
+	var date = new Date(unixtime * 1000);
+	var m = date.getMonth()+1;
+	var d = date.getDate();
+	var h = date.getHours();
+	var min = date.getMinutes();
+	var s = date.getSeconds();
+	return date.getFullYear() +'.'+((m<10)?'0':'')+ m +'.'+((d<10)?'0':'')+ d 
+		+' '+((h<10)?'0':'')+ h +':'+((min<10)?'0':'')+ min +':'+((s<10)?'0':'')+ s;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Класс зон контроллера
+// url - ссылка на каталог с датасетами
+// timeinterval - отображаемый на графиках интервал времени
+// divid - ид контейнера для создания контролов по зонам
+///////////////////////////////////////////////////////////////////////////////
+class ArduinoZones {
+
+	//=========================================================================
+	// Контруктор
+	//=========================================================================
+	constructor(url, timeinterval, divid) {
+		this.ti = timeinterval;
+		this.url = url;
+		this.container = document.getElementById(divid);
+		this.zones = [];// массив с зонами контроля
+						// id - идентификатор зоны (Z1, Z2 и т.д.)
+						// array - массив таймслотов
+		this.add_zone(1,'#ffa23c','#bbbbbb','#00C0C0'); // zone1
+		this.add_zone(2,'#ffa23c','#bbbbbb','#00C0C0'); // zone2
+		this.add_zone(3,'#88a23c','#88bbbb','#00C0C0'); // zone3
+
+		this.diagrams = []; //массив диаграмм
+		this.diagrams.push(new TemperatureDiagram(this.zones,'zonediagt',260,160,this.ti));
+		this.diagrams.push(new HumidityDiagram(this.zones,'zonediagh',260,160,this.ti));
+		this.diagrams.push(new AbsoluteHumidityDiagram(this.zones,'zonediagf',260,160,this.ti));
+
+		this.ti.onzoom = this.redraw.bind(this);
+		this.ti.onshift = this.redraw.bind(this);
+		this.redraw();
+		this.getinfo(function(t){
+			var d = this.parseinfo(t);
+			document.getElementById('loading').style.display = 'none';
+			this.updateinfo(d);
+			setInterval(function() { 
+				this.getinfo(function(t){ this.updateinfo(this.parseinfo(t));
+				}.bind(this), G_local_url);
+			}.bind(this), 10000);
+		}.bind(this), G_local_url);
+	}
+	//=========================================================================
+	// Функция получения информации от контроллера через AJAX
+	//=========================================================================
+	getinfo(f = function(text){}, url = '.') {
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET', url+'/?g:i&r='+Math.random(), true);
+		xhr.onload = function() {
+			document.getElementById('controllerinfo').innerText = this.responseText;
+			f(this.responseText);
+		}
+		xhr.send(null);
+	}
+	//=========================================================================
+	// Функция парсинга информации от контроллера
+	// возвращается структура
+	//=========================================================================
+	parseinfo(text) {
+		// 0:version, 1:numofzones,
+		// 2:unixtime, 3:starttime, 4:lastsynctime, 5:lastsyncdelta, 6:lastsyncinterval, 7:tickcounter
+		// 8:t1, 9:tc1, 10:h1, 11:m1, 12:p1, 13:dt1, 14:s1, 
+		// 15:t2, 16:tc2, 17:h2, 18:m2, 19:p2, 20:dt2, 21:s2,
+		// 22:t3, 23:tc3, 24:h3, 25:m3, 26:p3, 27:dt3, 28:s3,
+		var a = text.split(';');
+		var numofz = parseInt(a[1]);
+		var z = [];
+		for(var i=0;i<numofz;i++) {
+			var i2 = i*7;
+			z[i] = {t:parseInt(a[8+i2]),tc:parseInt(a[9+i2]),h:parseInt(a[10+i2]),
+				m:parseInt(a[11+i2]),p:parseInt(a[12+i2]),dt:parseInt(a[13+i2]),s:parseInt(a[14+i2])};
+		}
+		return {version:a[0],numofz:numofz,
+			unixtime:parseInt(a[2]),starttime:parseInt(a[3]),lastsynctime:parseInt(a[4]),lastsyncdelta:parseInt(a[5]),
+			lastsyncinterval:parseInt(a[6]),tickcounter:parseInt(a[7]),zones:z};
+	}
+	
+	//=========================================================================
+	// Функция добавления зоны и создания контрола зоны
+	//=========================================================================
+	add_zone(id, tcolor, hcolor, pcolor) {
+		this.zones.push(new ArduinoZone(this.url, id, tcolor, hcolor, pcolor));
+		this.zones[this.zones.length-1].onload = this.redraw.bind(this);
+		// добавление контрола
+		this.container.innerHTML += '\
+			<div class="controlbox" id="arduinocontrol-'+id+'">\
+				<div class="header"><div class="indicator"></div> ZONE '+id+'</div>\
+				<div>\
+					<div class="button pwrctrl" onclick="turnPwrCtrl(this,'+id+')">PWRCTRL</div>\
+					<div class="button pwr">PWR</div>\
+					<div class="button">CONFIG</div>\
+				</div>\
+				<div>\
+					<div class="button" onclick="turnShowPwr(this,'+id+')">SHOWPWR</div>\
+				</div>\
+				<div>\
+					<div class="parameter temperature button" onclick="modalOpen(this,'+id+')">\
+						<div class="name">temperature</div>\
+						<div class="value">0.0°(0.0°)</div>\
+					</div>\
+					<div class="parameter humidity">\
+						<div class="name">humidity</div>\
+						<div class="value">0.0%</div>\
+					</div>\
+				</div>\
+				<div class="sensorstatus"></div>\
+			</div>';
+	}
+	//=========================================================================
+	// Функция обновления информации по контроллеру на странице
+	//=========================================================================
+	updateinfo(d) {
+		document.getElementById('firmware').innerText = 'ver ' + d.version;
+		document.getElementById('controllertime').innerText = YYYYMMDDHHMMSS(d.unixtime);
+		for(var i=0;i<d.numofz;i++) {
+			var s = '';
+			switch(d.zones[i].s) {
+				case 0:	s = 'OK'; break;
+				case -1:	s = 'ErrChecksum'; break;
+				case -2:	s = 'ErrTimeout'; break;
+				case -3:	s = 'ErrConnect'; break;
+				case -4:	s = 'ErrAckL'; break;
+				case -5:	s = 'ErrAckH'; break;
+				default:	s = 'ErrUnknown';
+			}
+			var el = this.container.querySelector('#arduinocontrol-'+(i+1)+' .temperature > .value');
+			el.innerText = (d.zones[i].t/10.0).toFixed(1)+'°('+(d.zones[i].tc/10.0).toFixed(1)+'°)';
+			el = this.container.querySelector('#arduinocontrol-'+(i+1)+' .humidity > .value');
+			el.innerText = (d.zones[i].h/10.0).toFixed(1)+'%';
+			el = this.container.querySelector('#arduinocontrol-'+(i+1)+' .sensorstatus');
+			el.innerText = 'Sensor: ' + s;
+
+			el = this.container.querySelector('#arduinocontrol-'+(i+1)+' .pwr');
+			if(d.zones[i].p == 1) el.className='button active pwr';
+			else el.className='button pwr';
+			el = this.container.querySelector('#arduinocontrol-'+(i+1)+' .pwrctrl');
+			if(d.zones[i].m == 1) el.className='button active pwrctrl';
+			else el.className='button pwrctrl';
+		}
+	}
+	redraw(){
+		var a = []; //массив датасетов подготовленных для диаграмм
+		var tstep = 0;
+		for(var i=0; i<this.diagrams.length; i++) {
+			this.diagrams[i].rezoom();
+			// если шаг регуляризации одинаковый, используем кэшированные датасеты
+			if(tstep != this.diagrams[i].tstep) { 
+				a = [];
+				tstep = this.diagrams[i].tstep;
+				// подготавливаем набор датасетов по разным зонам
+				for(var j=0; j<this.zones.length; j++) {
+					a.push(this.zones[j].getzdata(this.ti,tstep));
+				}
+			}
+			this.diagrams[i].redraw(a);
+		}
+	}
+	//=========================================================================
+	// Функция подсчета потребленной мощности на обогрев на интервале времени ti
+	//=========================================================================
+	powercalc() {
+		var p=0.;
+		for (var t=(~~((this.ti.begin+3*3600)/86400))*86400-3*3600;t<this.ti.end;t+=86400) {
+			for(var i=0;i<this.zones.length;i++) {
+				console.log(this.zones[i].array[t]);
+				p+=this.zones[i].array[t].p.integrate(this.ti);
+			}
+		}
+		return p;
+	}
+	
+}
+
+</script>
+</head>
+
+<body>
+<div id="pagewrap">
+	
+	<div id="header">
+		<div class="left">
+			<div id="logo"></div>
+			<div id="title">Arduino TermoController</div>
+			<div id="firmware"></div>
+			<div id="controllertime"></div>
+		</div>
+		<div id="datetime">
+			<div id="time"></div>
+			<div id="date"></div>
+		</div>
+	</div>
+	
+	<div id="navigation">NAVIGATION</div>
+	
+	<div id="main">
+	
+		<div id="controls"></div>
+		
+		<div id="diagrams">
+			<div class="diagrambox">DIAGRAMS</div>
+			<div class="diagrambox">
+				<div class="header">Temperature, °C</div>
+				<div class="diagram" id="zonediagt"></div>
+			</div>
+			<div class="diagrambox">
+				<div class="header">Relative Humidity, %</div>
+				<div class="diagram" id="zonediagh"></div>
+			</div>
+			<div class="diagrambox">
+				<div class="header">Absolute Humidity, g/m3</div>
+				<div class="diagram" id="zonediagf"></div>
+			</div>
+		</div>
+	
+	</div>
+</div>
+
+<div id="modal">
+	<div id="modal-dialog">
+		<div class="modal-header">
+			<span class="close" onclick="modalClose()">&times;</span>
+			<h2>Set Temperature</h2>
+		</div>
+		<div class="modal-body">
+			<span class="plus" onclick="var elm=document.getElementById('tc');
+				elm.innerHTML=(parseFloat(elm.innerHTML)-0.1).toFixed(1);">-</span>
+			<span id="tc" contenteditable="true">0.0</span>
+			<span class="plus" onclick="var elm=document.getElementById('tc');
+				elm.innerHTML=(parseFloat(elm.innerHTML)+0.1).toFixed(1);">+</span>
+		</div>
+		<div class="modal-footer">
+			<span class="ok" onclick="modalApply()">Apply</span>
+			<span class="ok"  onclick="modalClose()">Cancel</span>
+		</div>
+	</div>
+</div>
+
+<!--Тестовый вывод строки информации с контроллера-->
+<div id="controllerinfo"></div>
+
+<!--Анимация загрузки-->
+<div id="loading"></div>
+
+<script type="text/javascript">
+'use strict';
+//var G_local_url = '.'; //для загрузки на контроллер
+var G_local_url = 'http://192.168.2.2'; //для проверки на тестовом сервере
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Функция инициализации
+/////////////////////////////////////////////////////////////////////////////////////////////
+function initialize() {
+	setInterval( function() { 
+		var date = new Date();
+		var formatter = new Intl.DateTimeFormat("ru", {hour: "numeric", minute: "numeric", second: "numeric"});
+		document.getElementById('time').innerText = formatter.format(date);
+		formatter = new Intl.DateTimeFormat("ru", {year: "numeric", month: "long", day: "numeric"});
+		document.getElementById('date').innerText = formatter.format(date);
+	}, 1000);
+}
+
+window.addEventListener( 'load', initialize, false );
+
+var today = ~~(Date.now()/1000);
+var ti = new TimeInterval(today-1*86400,today);
+//var zones = new ArduinoZones('arduino/',ti,'controls');
+var zones = new ArduinoZones('http://192.168.2.2/log/',ti,'controls');
+//var zones = new ArduinoZones('log/',ti,'controls');
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Функции управления контроллером
+/////////////////////////////////////////////////////////////////////////////////////////////
+function turnPwrCtrl(obj,i) {
+	var xhr = new XMLHttpRequest();
+	if(obj.className == 'button active pwrctrl') {
+		obj.className = 'button pwrctrl';
+		xhr.open('GET', G_local_url+'/?s'+i+'m:'+0+'&r='+Math.random()*1000000, false);
+		xhr.send(null);
+	}
+	else {
+		obj.className = 'button active pwrctrl';
+		xhr.open('GET', G_local_url+'/?s'+i+'m:'+1+'&r='+Math.random()*1000000, false);
+		xhr.send(null);
+	}
+}
+function turnShowPwr(obj,i) {
+	if(zones.zones[i-1].showpower) {
+		zones.zones[i-1].showpower = false;
+		obj.className = 'button';
+	}
+	else {
+		zones.zones[i-1].showpower = true;
+		obj.className = 'button active';
+	}
+	zones.redraw();
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Функции для модального окна
+/////////////////////////////////////////////////////////////////////////////////////////////
+var G_modal_id;
+function modalOpen(obj, id) {
+	G_modal_id = id;
+	var el = document.getElementById("tc");
+	el.innerHTML = obj.querySelector('.value').innerHTML.match(/\d+\.\d+/g)[1];
+	el = document.getElementById("modal");
+	el.querySelector('h2').innerHTML = 'Set temperature for ZONE '+id;
+	el.style.display = "block";
+}
+function modalClose() {
+	document.getElementById('modal').style.display='none';
+}
+function modalApply() {
+	var elmtcs = document.getElementById('tc');
+	var t = Math.round(parseFloat(elmtcs.innerHTML) * 10);
+	var xhr = new XMLHttpRequest();
+	xhr.open('GET', G_local_url+'/?s'+G_modal_id+'t:'+t+'&r='+Math.random()*1000000, false);
+	xhr.send(null);	
+	modalClose();
+}
+</script>
+</body></html>

@@ -1,0 +1,398 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Arduino TermoController</title>
+<style type="text/css">
+
+	*{ 
+		margin: 0; 
+		padding: 0; 
+		//border: 1px solid #000; 
+	}
+	html {
+		height: 100%;
+	}
+	body {
+		text-align: center;
+		margin: 0;
+		padding: 0;
+		background-color: #fff;
+		color: #000;
+		font-family: sans-serif;
+		font-size: 2em;
+		z-index: 2;
+	}
+	.infoblock {
+		//background-image: url(bg.jpg);
+		background-color: #ccc;
+		background-size: cover;
+		left: 0;
+		width: 100%;
+		color: #fff;
+		padding: 0.5em 0 0.5em 0;
+		margin: 0;
+		text-shadow: 1px 1px 0 #000;
+		//cursor: default;
+	}
+	.zoneblock {
+		display: inline-block;
+		position: relative;
+		background-color: rgba(0,0,0,0.3);
+		padding: 0.5em;
+		margin: 0.2em;
+		border-radius: 3px; 
+		box-shadow: 3px 3px 5px rgba(0,0,0,0.5);
+	}
+	.indicator { 
+		//display: inline-block;
+		position: relative;
+		font-size: 2em;
+		padding: 0.2em 0.4em;
+	}
+	.parent-pop-up { 
+		visibility: hidden;
+	  width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    //align-items: center;
+    //justify-content: center; 
+    //overflow: auto;   
+		background-color: rgba(0,0,0,0.3);
+		z-index: 1;
+	}
+	.pop-up { 
+		visibility: inherit;
+		//display: inline-block;
+		position: fixed;
+		font-size: 2em;
+		//width: 8em;
+		//height: 2em;
+		background-color: #fff;
+		padding: 0.2em;
+		border-radius: 5px; 
+		box-shadow: 5px 5px 5px rgba(0,0,0,0.5);
+		text-shadow: none; 
+		color: #000; 
+		//text-align: center;
+		//vertical-align: middle;
+  }
+	.pop-up img{
+	  vertical-align: top;
+	}
+	.pop-up-button{
+		//background-color: #ccc;
+		border: 1px solid #111; 
+		border-radius: 3px; 
+		white-space: nowrap; 
+		cursor: pointer;
+		-moz-user-select: none;
+		-khtml-user-select: none;
+		-webkit-user-select: none;
+		user-select: none;
+	}
+	.pop-up-button:hover{
+		background-color: #aaa;
+	}
+	
+	.pop-up *{
+		//border: 1px solid #000; 
+	}
+	.button { 
+		color: #fff; 
+		background-color: rgba(0,0,0,0.3);
+		border: 1px solid #cacaca; 
+		border-radius: 3px; 
+		white-space: nowrap; 
+		padding: 3px 12px; 
+		margin: 0; 
+		cursor: pointer;
+		opacity: 1;
+	}
+	.button:active, .button.active, .button.active:hover { 
+		background-color: #F49B25; 
+		text-shadow: none; 
+		color: #fff; 
+		opacity: 1;
+	}
+	.button:hover { 
+		background-color: #fff; 
+		text-shadow: none; 
+		color: #000;
+		opacity: 0.7;
+	}
+
+</style>
+</head>
+<body style="">
+<div class="header">Arduino ThermoRegulator</div>
+<div class="infoblock"> 
+  <div style="height:1em;">
+		<span id="datetime" style="margin:0.2em;position:absolute;right:0;"> </span>
+	</div>
+	
+	<div class="zoneblock" style="text-align: left;"> 
+		<span id="Zone1Button" class="button" onclick="switchZoneMode(this);">Zone 1</span>
+		<span id="Zone1Power" class="button">Off</span>
+		<span id="Zone1Status">OK</span>
+		<div style="height: 10px"></div>
+		<div> 
+			<div class="indicator button" onclick="showpopup(this,'popup','tc1');">
+				<div><span id="t1">0.0</span>°&nbsp;(<span id="tc1">0.0</span>°)</div>
+				<div style="font-size:0.35em;">температура (задать)</div>
+			</div>
+			<div class="indicator">
+				<div>
+					<div><span id="h1">0.0</span>%</div>
+					<div style="font-size:0.35em;">влажность</div>
+				</div>
+			</div>
+		</div>  
+	</div> 
+
+	<div class="zoneblock" style="text-align: left;"> 
+		<span id="Zone2Button" class="button" onclick="switchZoneMode(this);">Zone 2</span>
+		<span id="Zone2Power" class="button">Off</span>
+		<span id="Zone2Status">OK</span>
+		<div style="height: 10px"></div>
+		<div> 
+		  <div class="indicator button" onclick="showpopup(this,'popup','tc2');">
+			  <div><span id="t2">0.0</span>°&nbsp;(<span id="tc2">0.0</span>°)</div>
+				<div style="font-size:0.35em;">температура (задать)</div>
+			</div>
+			<div class="indicator">
+			  <div>
+					<div><span id="h2">0.0</span>%</div>
+					<div style="font-size:0.35em;">влажность</div>
+				</div>
+  		</div>
+		</div>  
+	</div> 
+</div>   
+
+<div class="parent-pop-up">
+		<div id="popup" class="pop-up">
+			<div>
+				<span class="pop-up-button" style="display:inline-block;width:1.5em;" onclick="var elm=document.getElementById('tc');
+								 elm.innerHTML=(elm.innerHTML-0.1).toFixed(1);">-</span>
+				<span id="tc" style="display:inline-block;" contenteditable="true">0.0</span>
+				<span class="pop-up-button" style="display:inline-block;width:1.5em;" onclick="var elm=document.getElementById('tc');
+								 elm.innerHTML=(parseFloat(elm.innerHTML)+0.1).toFixed(1);">+</span>
+			</div>
+			<div style="height:10px"></div>
+			<div>
+				<span class="pop-up-button" style="display:inline-block;" onclick="okpopup('popup')">Ok</span>
+				<span class="pop-up-button" style="display:inline-block;" onclick="closepopup('popup');">Esc</span>
+			</div>
+		</div>
+</div>
+
+<div>
+  <p id="ContrTime" style="font-size: 8px;"></p>
+  <p id="ContrTime2"></p>
+</div>
+
+
+<script type="text/javascript">
+	
+'use strict';
+var xmlhttp;
+window.addEventListener( 'load', initialize, false );
+
+var G_obj;
+var G_idtc;
+function showpopup(obj,id,idtc) {
+  var elm = document.getElementById(id);
+	var parelm = elm.parentNode;
+  var elmtcs = document.getElementById(idtc);
+  var elmtcd = document.getElementById("tc");
+	G_obj = obj;
+	G_idtc = idtc;
+	if(elm)	{
+		if(parelm.style.visibility == "visible") {
+//			obj.className = 'indicator button';
+		  parelm.style.visibility = "hidden";
+	  }
+		else	{ 
+			elmtcd.innerHTML = elmtcs.innerHTML;
+			obj.className += ' active';
+		  parelm.style.visibility = "visible";
+			var h = elm.offsetHeight;
+			var w = elm.offsetWidth;
+			var ph = parelm.offsetHeight;
+			var pw = parelm.offsetWidth;
+			elm.style.left = (pw-w)/2 + "px";
+			elm.style.top = obj.getBoundingClientRect().bottom + "px";
+		}
+ 	} 	
+}
+function okpopup(id) {
+  var elmtcs = document.getElementById('tc');
+  var elmtcd = document.getElementById(G_idtc);
+	var t;
+	t = Math.round(parseFloat(elmtcs.innerHTML) * 10);
+	if(G_idtc=='tc1') {
+		xmlhttp.open('GET', './?s1t:'+t+'&r='+Math.random()*1000000, false);
+		xmlhttp.send(null);	
+	}
+	else if(G_idtc=='tc2') {
+		xmlhttp.open('GET', './?s2t:'+t+'&r='+Math.random()*1000000, false);
+		xmlhttp.send(null);	
+	}
+	elmtcd.innerHTML = elmtcs.innerHTML;
+	closepopup(id);
+}
+
+function closepopup(id) {
+	var elm = document.getElementById(id);
+	var parelm = elm.parentNode;
+  parelm.style.visibility = "hidden";
+	G_obj.className = 'indicator button';
+}
+
+// Переключить режим работы зоны
+function switchZoneMode(obj) {
+	if( obj.className == 'button' ) {
+		if( obj.id == 'Zone1Button' ) {
+			xmlhttp.open('GET', './?s1m:'+1+'&r='+Math.random()*1000000, false);
+			xmlhttp.send(null);	
+		}
+		else if( obj.id == 'Zone2Button' ) {
+			xmlhttp.open('GET', './?s2m:'+1+'&r='+Math.random()*1000000, false);
+			xmlhttp.send(null);	
+		}
+		obj.className = 'button active';
+	}
+	else {
+		if( obj.id == 'Zone1Button' ) {
+			xmlhttp.open('GET', './?s1m:'+0+'&r='+Math.random()*1000000, false);
+			xmlhttp.send(null);	
+		}
+		else if( obj.id == 'Zone2Button' ) {
+			xmlhttp.open('GET', './?s2m:'+0+'&r='+Math.random()*1000000, false);
+			xmlhttp.send(null);	
+		}
+		obj.className = 'button';
+	}
+}
+
+// Получить информацию от устройства
+function getInfo() {
+	xmlhttp.open('GET', './?g:i&r='+Math.random()*1000000, false);
+	xmlhttp.send(null);	
+	return xmlhttp.responseText;
+}
+
+function YYYYMMDDHHMMSS(unixtime) {
+	var date = new Date(unixtime * 1000);
+	var m = date.getMonth()+1;
+	var d = date.getDate();
+	var h = date.getHours();
+	var min = date.getMinutes();
+	var s = date.getSeconds();
+	return date.getFullYear() +'.'+((m<10)?'0':'')+ m +'.'+((d<10)?'0':'')+ d 
+		+' '+((h<10)?'0':'')+ h +':'+((min<10)?'0':'')+ min +':'+((s<10)?'0':'')+ s;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Функция инициализации
+/////////////////////////////////////////////////////////////////////////////////////////////
+function initialize() {
+	xmlhttp = new XMLHttpRequest();
+
+	//Установка обработчика по таймеру
+	setInterval( function() { 
+		var s = getInfo();
+		if ( s !== '') {
+			document.getElementById('ContrTime').innerHTML = s;	
+			var iblock = s.split(';');
+			
+    //2018-09-06e;3;
+	//1537007949;1537007934;1537007944;0;5000;19324;
+	//183;300;721;0;0;5;0;
+	//188;300;826;0;0;1;0;
+	//0;2;0;0;0;6;-2;
+	
+	// 0:t1, 1:tc1, 2:h1, 3:m1, 4:p1, 5:dt1, 6:s1, 
+    // 7:t2, 8:tc2, 9:h2, 10:m2, 11:p2, 12:dt2, 13:s2,
+    // 14:unixtime, 15:starttime, 16:lastsynctime, 17:lastsyncdelta, 18:lastsyncinterval
+	
+	// новый вариант вывода
+    // 0:version, 1:numofzones,
+    // 2:unixtime, 3:starttime, 4:lastsynctime, 5:lastsyncdelta, 6:lastsyncinterval, 7:tickcounter
+    // 8:t1, 9:tc1, 10:h1, 11:m1, 12:p1, 13:dt1, 14:s1, 
+    // 15:t2, 16:tc2, 17:h2, 18:m2, 19:p2, 20:dt2, 21:s2,
+    // 22:t3, 23:tc3, 24:h3, 25:m3, 26:p3, 27:dt3, 28:s3,	
+
+			// Режим поддержания температуры?
+			if(iblock[11]==1) document.getElementById('Zone1Button').className = 'button active';
+			else document.getElementById('Zone1Button').className = 'button';
+			if(iblock[18]==1) document.getElementById('Zone2Button').className = 'button active';
+			else document.getElementById('Zone2Button').className = 'button';
+			
+			// Мощность подается?
+			if(iblock[12]==1) {
+			  document.getElementById('Zone1Power').className = 'button active';
+			  document.getElementById('Zone1Power').innerHTML = 'On';
+			}
+			else {
+			  document.getElementById('Zone1Power').className = 'button';
+			  document.getElementById('Zone1Power').innerHTML = 'Off';
+			}
+			if(iblock[19]==1) {
+			  document.getElementById('Zone2Power').className = 'button active';
+			  document.getElementById('Zone2Power').innerHTML = 'On';
+			}
+			else {
+			  document.getElementById('Zone2Power').className = 'button';
+			  document.getElementById('Zone2Power').innerHTML = 'Off';
+			}
+
+			// Статус датчика 1
+			var s_el = document.getElementById('Zone1Status');
+			switch(iblock[14]) {
+				case '0':	s_el.innerHTML = 'OK'; break;
+				case '-1':	s_el.innerHTML = 'ErrChecksum'; break;
+				case '-2':	s_el.innerHTML = 'ErrTimeout'; break;
+				case '-3':	s_el.innerHTML = 'ErrConnect'; break;
+				case '-4':	s_el.innerHTML = 'ErrAckL'; break;
+				case '-5':	s_el.innerHTML = 'ErrAckH'; break;
+				default:	s_el.innerHTML = 'ErrUnknown';
+			}
+			// Статус датчика 2
+			s_el = document.getElementById('Zone2Status');
+			switch(iblock[21]) {
+				case '0':	s_el.innerHTML = 'OK'; break;
+				case '-1':	s_el.innerHTML = 'ErrChecksum'; break;
+				case '-2':	s_el.innerHTML = 'ErrTimeout'; break;
+				case '-3':	s_el.innerHTML = 'ErrConnect'; break;
+				case '-4':	s_el.innerHTML = 'ErrAckL'; break;
+				case '-5':	s_el.innerHTML = 'ErrAckH'; break;
+				default:	s_el.innerHTML = 'ErrUnknown';
+			}
+			
+			var date = new Date();
+			document.getElementById('datetime').innerHTML = YYYYMMDDHHMMSS(iblock[2]);
+			document.getElementById('ContrTime2').innerHTML = 
+				'RealTimeDiff:'+(Math.floor(date.getTime()/1000)-iblock[2])
+				+'s Start:'+YYYYMMDDHHMMSS(iblock[3])
+				+' WorkingTime:'+(iblock[2]-iblock[3])
+				+'s LastSync:'+YYYYMMDDHHMMSS(iblock[4])
+				+' LastSyncTime:'+(iblock[2]-iblock[4])
+				+'s';
+			document.getElementById('t1').innerHTML = (iblock[8]/10.0).toFixed(1);	
+			document.getElementById('tc1').innerHTML = (iblock[9]/10.0).toFixed(1);	
+			document.getElementById('h1').innerHTML = (iblock[10]/10.0).toFixed(1);	
+			document.getElementById('t2').innerHTML = (iblock[15]/10.0).toFixed(1);	
+			document.getElementById('tc2').innerHTML = (iblock[16]/10.0).toFixed(1);	
+			document.getElementById('h2').innerHTML = (iblock[17]/10.0).toFixed(1);	
+		}
+	}, 5000);
+}
+
+
+</script>
+
+
+</body></html>
