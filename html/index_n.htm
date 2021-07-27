@@ -1,0 +1,82 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arduino TermoController</title>
+<link href="style.css" rel="stylesheet">
+</head>
+
+<body>
+<div id="pagewrap">
+	
+	<div id="header">
+		<div class="left">
+			<div id="logo"></div>
+			<div id="title">Arduino TermoController</div>
+			<div id="firmware"></div>
+			<div id="controllertime"></div>
+		</div>
+		<div id="datetime">
+			<div id="time"></div>
+			<div id="date"></div>
+		</div>
+	</div>
+	
+	<div id="navigation">NAVIGATION</div>
+	
+	<div id="main">
+	
+		<div id="controls"></div>
+		
+		<div id="diagrams">
+			<div class="diagrambox">DIAGRAMS</div>
+			<div class="diagrambox">
+				<div class="header">Temperature, °C</div>
+				<div class="diagram" id="zonediagt"></div>
+			</div>
+			<div class="diagrambox">
+				<div class="header">Relative Humidity, %</div>
+				<div class="diagram" id="zonediagh"></div>
+			</div>
+			<div class="diagrambox">
+				<div class="header">Absolute Humidity, g/m3</div>
+				<div class="diagram" id="zonediagf"></div>
+			</div>
+			<div class="diagrambox">
+				<div class="header">Hydro System Pressure, kg/sm3</div>
+				<div class="diagram" id="hydrodiagp"></div>
+			</div>
+		</div>
+	
+	</div>
+</div>
+
+<div id="modal">
+	<div id="modal-dialog">
+		<div class="modal-header">
+			<span class="close" onclick="modalClose()">&times;</span>
+			<h2>Set Temperature</h2>
+		</div>
+		<div class="modal-body">
+			<span class="plus" onclick="var elm=document.getElementById('tc');
+				elm.innerHTML=(parseFloat(elm.innerHTML)-0.1).toFixed(1);">-</span>
+			<span id="tc" contenteditable="true">0.0</span>
+			<span class="plus" onclick="var elm=document.getElementById('tc');
+				elm.innerHTML=(parseFloat(elm.innerHTML)+0.1).toFixed(1);">+</span>
+		</div>
+		<div class="modal-footer">
+			<span class="ok" onclick="modalApply()">Apply</span>
+			<span class="ok"  onclick="modalClose()">Cancel</span>
+		</div>
+	</div>
+</div>
+
+<!--Тестовый вывод строки информации с контроллера-->
+<div id="controllerinfo"></div>
+
+<!--Анимация загрузки-->
+<div id="loading"></div>
+
+<script src="main.js"></script>
+
+</body></html>

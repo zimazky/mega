@@ -14,11 +14,14 @@
 
 //DHT22_pin, LED_pin, BUTTON_pin, POWER_pin, Tc, dT, id
 //DHT22_pin, id
+
 zone z[NZ] = {zone(9,8,7,A0,300,5,'1'),zone(2,3,5,A1,300,1,'2'),zone(6,'3')};
+//zone z[NZ] = {zone(2,3,5,A1,300,1,'2'),zone(6,'3')};
+
 hk3022 hydro = hk3022(A2);
 ticker tck;
 webserver web;
-const char _version[] = "20200919"; // Версия прошивки 27838 bytes
+const char _version[] = "20210727"; // Версия прошивки 27200 bytes
 
 void setup() {
   Serial.begin(9600);
@@ -32,9 +35,9 @@ void setup() {
   }
   Serial.println(" OK");
   byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEE };
-  web.begin( mac, {192,168,1,10}, {192,168,1,1}, {255,255,255,0} );  // MAC, IP, GATEWAY, MASK
+//  web.begin( mac, {192,168,1,10}, {192,168,1,1}, {255,255,255,0} );  // MAC, IP, GATEWAY, MASK
 //  byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-//  web.begin( mac, {192,168,2,2}, {192,168,2,3}, {255,255,255,0} );  // MAC, IP, GATEWAY, MASK
+  web.begin( mac, {192,168,2,2}, {192,168,2,3}, {255,255,255,0} );  // MAC, IP, GATEWAY, MASK
 
   tck.begin();          // Запускаем тикер
   readconf();           // Читаем конфигурацию
@@ -59,6 +62,7 @@ void h5s() {
   Serial.print(hhmmss(s,tck.unixtime)); Serial.print(" ");
   Serial.print(tck.unixtime-tck.starttime); Serial.print(" ");
   Serial.print(tck._t); Serial.println(" ");
+  Serial.println(hydro.pressure);
   */
   
   for(int i=0; i<NZ; i++) { z[i].handler5s(); }
@@ -258,7 +262,7 @@ void ajax_handler(EthernetClient client, char* req) {
     writeconf();
     return;
   }
-  
+  /*
   /////////////////////////////////////////
   // l:/xxxxx/xxxx Запрос списка файлов в директории /xxxxx/xxxx. Выводим с разделителем ';'
   /////////////////////////////////////////
@@ -296,6 +300,7 @@ void ajax_handler(EthernetClient client, char* req) {
   /////////////////////////////////////////
   // d:/xxxxx/xxxx Удаление файла /xxxxx/xxxx
   /////////////////////////////////////////
+  
   if( ajaxp.state == AJAX_D ) {
     client.println(http200);
     client.println(httpconnectionclose);
@@ -310,7 +315,7 @@ void ajax_handler(EthernetClient client, char* req) {
     client.println();
     return;
   }
-  
+*/
   client.println(http501);
   client.println();
   
