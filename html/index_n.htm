@@ -7,6 +7,7 @@
 </head>
 
 <body>
+
 <div id="pagewrap">
 	
 	<div id="header">
@@ -29,7 +30,16 @@
 		<div id="controls"></div>
 		
 		<div id="diagrams">
-			<div class="diagrambox">DIAGRAMS</div>
+			<div class="diagrambox">
+				<div>DIAGRAMS</div>
+				<div>
+					<div class="button" onclick="update(this)">&#x21bb;</div>
+				</div>
+			</div>
+			<div class="diagrambox">
+				<div class="header">Hydro System Pressure, bar</div>
+				<div class="diagram" id="hydrodiagp"></div>
+			</div>
 			<div class="diagrambox">
 				<div class="header">Temperature, °C</div>
 				<div class="diagram" id="zonediagt"></div>
@@ -41,10 +51,6 @@
 			<div class="diagrambox">
 				<div class="header">Absolute Humidity, g/m3</div>
 				<div class="diagram" id="zonediagf"></div>
-			</div>
-			<div class="diagrambox">
-				<div class="header">Hydro System Pressure, kg/sm3</div>
-				<div class="diagram" id="hydrodiagp"></div>
 			</div>
 		</div>
 	
