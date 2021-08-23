@@ -13,7 +13,7 @@
 class hk3022 {
 public:  
   //int16_t pressure;        // Текущее давление в системе, бар*1000
-  uint8_t pressure;          // Ток с датчика, В*1023/5
+  int16_t pressure;          // Ток с датчика, В*1023/5
   
   hk3022( uint8_t pin );
   void read();                // Чтение датчика

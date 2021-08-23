@@ -21,7 +21,7 @@ zone z[NZ] = {zone(9,8,7,A0,300,5,'1'),zone(2,3,5,A1,300,1,'2'),zone(6,'3')};
 hk3022 hydro = hk3022(A2);
 ticker tck;
 webserver web;
-const char _version[] = "20210822"; // Версия прошивки 27080 bytes
+const char _version[] = "20210822"; // Версия прошивки 27084 bytes
 
 void setup() {
   Serial.begin(9600);
