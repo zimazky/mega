@@ -245,6 +245,7 @@ void ajax_handler(EthernetClient client, char* req) {
     if( ajaxp.z == 0 ) return; // зона не определена
     z[ajaxp.z-1].target_temperature = ajaxp.x;
     client.println(http200);
+    client.println(httpaccesscontrol);
     client.println(httpconnectionclose);
     client.println();
     writeconf();
@@ -257,6 +258,7 @@ void ajax_handler(EthernetClient client, char* req) {
     if( ajaxp.z == 0 ) return; // зона не определена
     z[ajaxp.z-1].mode = ajaxp.x;
     client.println(http200);
+    client.println(httpaccesscontrol);
     client.println(httpconnectionclose);
     client.println();
     writeconf();
