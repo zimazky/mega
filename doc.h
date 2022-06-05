@@ -30,7 +30,7 @@
  * A0 (PCINT8/ADC0)               Реле1		                  Orange/White
  * A1 (PCINT9/ADC1)               Реле2		                  Green/White
  * A2 (PCINT10/ADC2)              НК3022 (Датчик давления)  Green
- * A3 (PCINT11/ADC3)			        ---		                    Blue/White
+ * A3 (PCINT11/ADC3)			        PumpPower                 Blue/White
  * A4 (PCINT12/SDA/ADC4)		      ---		                    Blue
  * A5 (PCINT13/SCL/ADC5)		      ---		
  * 

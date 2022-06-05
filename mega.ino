@@ -1,6 +1,45 @@
 /*
- * Arduino UNO
+ * Arduino MEGA
  * 
+ *                                                         Digital D21/SCL
+ *                                                         Digital D20/SCA
+ *                                                                 AREF
+ *                                                                 GND
+ *                    
+ *                    NC                                   Digital ~D13      Eth SCK
+ *                    IOREF                                Digital ~D12      Eth MISO
+ *                    RESET                                Digital ~D11      Eth MOSI
+ *                    +3V3                                 Digital ~D10      Eth SS for Ethernet controller
+ *                    +5V                                  Digital ~D9       Zone1 Data
+ *                    GND                                  Digital ~D8       Zone1 LED
+ *                    GND
+ *                    VIN                                  Digital ~D7       Zone1 Btn
+ *                                                         Digital ~D6       Zone3 Data
+ *        Zone1 Pwr   A0/D54  Analog                       Digital ~D5       Zone2 Btn
+ *        Zone2 Pwr   A1/D55  Analog                       Digital ~D4       Eth SS for SD-card
+ *        Hydro Data  A2/D56  Analog                       Digital ~D3       Zone2 LED
+ *        Hydro Pump  A3/D57  Analog                       Digital ~D2       Zone2 Data
+ *           Reserve  A4/D58  Analog                       Digital ~D1/TX0   XXX
+ *   Irrigation1 Pwr  A5/D59  Analog                       Digital ~D0/RX0   XXX
+ *                    A6/D60  Analog
+ *                    A7/D61  Analog                       Digital D14/TX3   
+ *                                                         Digital D15/RX3   
+ *                    A8/D62  Analog                       Digital D16/TX2
+ *                    A9/D63  Analog                       Digital D17/RX2
+ *                    A10/D64 Analog                       Digital D18/TX1
+ *                    A11/D65 Analog                       Digital D19/RX1
+ *                    A12/D66 Analog             Digital Input/I2C D20/SDA
+ *                    A13/D67 Analog             Digital Input/I2C D21/SCL
+ *                    A14/D68 Analog
+ *                    A15/D69 Analog
+ *                    
+ *                            G D D D D D D D D D D D D D D D D 5 
+ *                            N 5 5 4 4 4 4 4 3 3 3 3 3 2 2 2 2 V
+ *                            D 2 0 8 6 4 2 0 8 6 4 2 0 8 6 4 2
+ *                      
+ *                            G D D D D D D D D D D D D D D D D 5 
+ *                            N 5 5 4 4 4 4 4 3 3 3 3 3 2 2 2 2 V
+ *                            D 3 1 9 7 5 3 1 9 7 5 3 1 9 7 5 3
  */
 
 #include <SPI.h>
@@ -18,10 +57,10 @@
 zone z[NZ] = {zone(9,8,7,A0,300,5,'1'),zone(2,3,5,A1,300,1,'2'),zone(6,'3')};
 //zone z[NZ] = {zone(2,3,5,A1,300,1,'2'),zone(6,'3')};
 
-hk3022 hydro = hk3022(A2);
+hk3022 hydro = hk3022(A2, A3);
 ticker tck;
 webserver web;
-const char _version[] = "20220101"; // Версия прошивки 27084 bytes
+const char _version[] = "20220605"; // Версия прошивки 27090 bytes
 
 void setup() {
   Serial.begin(9600);
@@ -35,9 +74,9 @@ void setup() {
   }
   Serial.println(" OK");
   byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEE };
-//  web.begin( mac, {192,168,1,10}, {192,168,1,1}, {255,255,255,0} );  // MAC, IP, GATEWAY, MASK
+  web.begin( mac, {192,168,1,10}, {192,168,1,1}, {255,255,255,0} );  // MAC, IP, GATEWAY, MASK
 //  byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-  web.begin( mac, {192,168,2,2}, {192,168,2,3}, {255,255,255,0} );  // MAC, IP, GATEWAY, MASK
+//  web.begin( mac, {192,168,2,2}, {192,168,2,3}, {255,255,255,0} );  // MAC, IP, GATEWAY, MASK
 
   tck.begin();          // Запускаем тикер
   readconf();           // Читаем конфигурацию
@@ -67,7 +106,8 @@ void h5s() {
   
   for(int i=0; i<NZ; i++) { z[i].handler5s(); }
 
-  hydro.read();
+  //hydro.read();
+  hydro.handler5s(tck.unixtime);
   
   if(tck.starttime) { // Если время было синхронизировано
     char f[20] = {'l','o','g','/',0};

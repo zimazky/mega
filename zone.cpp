@@ -24,24 +24,6 @@
 
 #include "zone.h"
 
-button::button( uint8_t pin ) {
-    _pin = pin;
-    _old_value = HIGH;
-    pinMode( _pin, INPUT_PULLUP );
-  }
-
-uint8_t button::state() {
-    uint8_t v1 = digitalRead( _pin ); delay(5);
-    uint8_t v2 = digitalRead( _pin ); delay(5);
-    uint8_t v3 = digitalRead( _pin );
-    if( v1<_old_value && v2<_old_value && v3<_old_value ) {
-      _old_value = v1;
-      return 1;
-    }
-    _old_value = v1;
-    return 0;
-  }
-
 // Конструктор для зоны без управления
 zone::zone(uint8_t dht_pin, char i) {
     id = i;
@@ -99,13 +81,13 @@ void zone::handler5s() {
   }
 
 void zone::print(Stream* s) {
-    s->print(temperature); s->print(';');          // 0. температура1 t1
-    s->print(target_temperature); s->print(';');   // 1. заданная температура1 tc1
-    s->print(humidity); s->print(';');             // 2. влажность1 h1
-    s->print(mode); s->print(';');                 // 3. режим работы1 m1
-    s->print(poweron); s->print(';');              // 4. подача энергии p1
-    s->print(delta); s->print(';');                // 5. гистерезис теипературы dt1
-    s->print(dht_status); s->print(';');           // 6. состояние датчика s1
+    s->print(temperature); s->print(';');          // 0. температура t
+    s->print(target_temperature); s->print(';');   // 1. заданная температура tc
+    s->print(humidity); s->print(';');             // 2. влажность h
+    s->print(mode); s->print(';');                 // 3. режим работы m
+    s->print(poweron); s->print(';');              // 4. подача энергии p
+    s->print(delta); s->print(';');                // 5. гистерезис теипературы dt
+    s->print(dht_status); s->print(';');           // 6. состояние датчика s
 }
 
 void zone::println(Stream* s) {

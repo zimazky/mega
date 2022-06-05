@@ -2,7 +2,7 @@
 //    FILE: zone.h
 //  AUTHOR: Andrew Zimazky
 // VERSION: 0.0.1
-// PURPOSE: Class button and class zone definition
+// PURPOSE: Class zone definition
 //
 
 #ifndef zone_h
@@ -10,15 +10,7 @@
 
 #include <Arduino.h>
 #include "dht.h"
-
-class button {
-public:  
-  button( uint8_t pin );
-  uint8_t state();            // Состояние кнопки (нажата/отпущена)
-private:
-  uint8_t _pin;
-  uint8_t _old_value;
-};
+#include "button.h"
 
 class zone {
 public:

@@ -3,9 +3,9 @@
 
 uint32_t ntpUnixTime (EthernetUDP &udp);
 
-#define timeServer {192,168,2,1}  
+//#define timeServer {192,168,2,1}  
 //#define timeServer {91,226,136,155}  //ntp4.stratum2.ru
-//#define timeServer {88,147,254,232}  //ntp2.stratum2.ru
+#define timeServer {88,147,254,230}  //ntp4.stratum2.ru
 //#define timeServer {192,168,4,55}  
 
 EthernetUDP udp;
@@ -101,7 +101,7 @@ void ticker::handler5s( void (*f)() ) {
   _is_overflow = false; // _t перешел через 0, сбрасываем состояние переполнения (и _t и _t5s перешли через 0)
   if(_t >= _t5s ) { 
     unixtime += 5;  // отслеживание реального времени если тикер уже был синхронизирован
-    f();            // вызов функции
+    f();    // вызов функции
     _syncf = 0;     // сбрасываем состояние синхронизации после функции-обработчика, чтобы в функции можно было его использовать
     // синхронизируем часы если они еще не синхронизированы или если после последней синхронизации прошло значительное время
     if( !_is_sync || ((unixtime-lastsynctime)>5000)) { sync(); }
