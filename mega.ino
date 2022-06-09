@@ -235,11 +235,6 @@ void ajax_handler(EthernetClient client, char* req) {
     client.println(httpconnectionclose);
     client.println();
 
-    // устаревший вариант вывода
-    // 0:t1, 1:tc1, 2:h1, 3:m1, 4:p1, 5:dt1, 6:s1, 
-    // 7:t2, 8:tc2, 9:h2, 10:m2, 11:p2, 12:dt2, 13:s2,
-    // 14:unixtime, 15:starttime, 16:lastsynctime, 17:lastsyncdelta, 18:lastsyncinterval
-
     // новый вариант вывода
     // 0:version, 1:numofzones,
     // 2:unixtime, 3:starttime, 4:lastsynctime, 5:lastsyncdelta, 6:lastsyncinterval, 7:tickcounter
