@@ -23,6 +23,7 @@
  */
 
 #include "irrigate.h"
+#include "ticker.h"
 
 irrigate::irrigate( uint8_t pw_pin ) {
   _pw_pin = pw_pin;
@@ -33,7 +34,22 @@ void irrigate::handler5s(uint32_t unixtime, int8_t is_hydrosystem_ready) {
 
   if(!is_hydrosystem_ready) return;
   poweron = false;
-
+  
+  uint32_t localtime = time(unixtime);
+  uint32_t starttime = Astart*600; // Перевод десятиминуток в секунды
+  uint32_t endtime = starttime + Aduration*60; // Перевод минут в секунды
+  if((localtime>=starttime) && (localtime<endtime)) {
+    // время соответствует расписанию
+    if(Adays & 128) { // По дням недели
+      int8_t wdmask = 1 << weekday(unixtime);
+      if(Adays & wdmask) poweron = true;
+    }
+    else {
+      int8_t md = monthday(unixtime);
+      if((Adays == 65) && (md & 1)) poweron = true; // нечетное число
+      if((Adays == 64) && (md ^ 1)) poweron = true; // четное число
+    }
+  }
   
   digitalWrite(_pw_pin, poweron);
 }
