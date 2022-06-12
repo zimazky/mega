@@ -9,7 +9,7 @@ char* hex(char* datestring, uint32_t unixtime);
 uint32_t time(uint32_t unixtime);
 int8_t weekday(uint32_t unixtime);
 int8_t monthday(uint32_t unixtime);
-
+/*
 class datetime {
 public:
   uint8_t day;
@@ -19,7 +19,7 @@ public:
   uint32_t time;
   datetime(unixtime);
 }
-
+*/
 class ticker {
 public:
   uint32_t _t = 0;

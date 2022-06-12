@@ -45,7 +45,7 @@ int16_t hk3022::getpressure(uint32_t unixtime) {
 void hk3022::handler5s(uint32_t unixtime) {
   pressure = analogRead(_pin);
   //pressure = getpressure(unixtime);
-  Serial.print("ut="); Serial.println(unixtime);
+  //Serial.print("ut="); Serial.println(unixtime);
   Serial.print("p="); Serial.println(pressure);
 
   poweron = false;
@@ -74,8 +74,8 @@ void hk3022::handler5s(uint32_t unixtime) {
       poweron = false;
   }
   
-  Serial.print("mode="); Serial.println(mode);
-  Serial.print("poweron="); Serial.println(poweron);
+  //Serial.print("mode="); Serial.println(mode);
+  //Serial.print("poweron="); Serial.println(poweron);
   digitalWrite(_pw_pin, poweron);
 }
 
@@ -124,29 +124,29 @@ void hk3022::writeconf(Stream* s) {
 // 1. Флаги событий int8_t
 //    1 - Изменение фактического давления
 //    2 - Признак передачи данных без преобразования (0В=0, 5В=1023)
-//    4 - (Резерв) Бит подачи мощности на насос
-//    8 - (Резерв) Режим работы
-//   16 - (Резерв) Заданный верхний предел давления отключения насоса
-//   32 - (Резерв) Заданный нижний предел давления включения насоса
-//   64 - (Резерв) Заданный предел давления сухого хода
+//    4 - Режим работы и подача мощности на насос
+//    8 - Изменились настройки параметров давления (hilimit, lolimit, drylimit)
+//   16 - Изменились настройки временных параметров (pumpinittime, pumprunlimit, retryinterval)
 //  128 - Признак полной записи (выводятся все поля в виде полного значения)
 // 2. Метка времени. Тип unixtime, выводится разница с предыдущим значением в потоке.
 // Далее в соответствии с установленными битами флагов событий выводятся параметры:
 // 3. Фактическое давление. Тип int16_t, выводится разница с предыдущим значением в потоке.
-// 4. Режим работы. Тип int8_t, выводится значение (0 - отключено слежение, 1 - включено слежение до запуска насоса, 2 - слежение после запуска насоса, 3 - сухой ход).
-// 5. Заданное значение верхнего предела давления отключения насоса. Тип int16_t, выводится разница с предыдущим значением в потоке.
-// 6. Заданное значение нижнего предела давления включения насоса. Тип int16_t, выводится разница с предыдущим значением в потоке.
-// 7. Заданное значение предела давления сухого хода. Тип int16_t, выводится разница с предыдущим значением в потоке.
+// 4. Режим работы и подача мощности. Тип int8_t, выводится значение (0 - отключено слежение, 1 - включено слежение до запуска насоса, 2 - слежение после запуска насоса, 3 - сухой ход) += 4 если включен насос.
+// 5. Заданные значения параметров давления (hilimit; lolimit; drylimit)
+// 6. Заданные значения временных параметров (pumpinittime; pumprunlimit; retryinterval)
 //-------------------------------------------------------------------------------------------------
 
 void hk3022::logdiff(Stream* s, uint32_t unixtime, bool f) {
   
   uint8_t b = 0;
   // полная запись
-  if(f) { _ut = 0; _p = 0; b = 128; }
+  if(f) { _ut = 0; _p = 0; _pw = 0; _m = 0; _hl = 0; _ll = 0; _dl = 0; _pit = 0; _prl = 0; _ri = 0; b = 128; }
   
   // блок определения байта флагов
-  if( pressure != _p ) b += 3; // выводим только в виде непреобразованных данных (флаг 1+2)
+  if(pressure != _p) b += 3; // выводим только в виде непреобразованных данных (флаг 1+2)
+  if((poweron != _pw) || (mode != _m)) b += 4;
+  if((hilimit != _hl) || (lolimit != _ll) || (drylimit != _dl)) b += 8;
+  if((pumpinittime != _pit) || (pumprunlimit != _prl) || (retryinterval != _ri)) b += 16;
 
   // блок вывода
   if( b ) {
@@ -156,6 +156,24 @@ void hk3022::logdiff(Stream* s, uint32_t unixtime, bool f) {
     s->print(';'); s->print( unixtime - _ut); _ut = unixtime;
     // давление
     if( b & 1) { s->print(';'); s->print( pressure - _p ); _p = pressure; }
+    // режим работы и подача мощности
+    if( b & 4) { s->print(';'); s->print( mode + (poweron<<2) ); _pw = poweron; _m = mode; }
+    // значения параметров давления (hilimit; lolimit; drylimit)
+    if( b & 8) { 
+      s->print(';'); s->print(hilimit);
+      s->print(';'); s->print(lolimit);
+      s->print(';'); s->print(drylimit);
+      _hl = hilimit; _ll = lolimit; _dl = drylimit;
+    }
+    // значения временных параметров (pumpinittime; pumprunlimit; retryinterval)
+    if( b & 16) { 
+      s->print(';'); s->print(pumpinittime);
+      s->print(';'); s->print(pumprunlimit);
+      s->print(';'); s->print(retryinterval);
+      _pit = pumpinittime; _prl = pumprunlimit; _ri = retryinterval;
+    }
+
+
     // конец строки
     s->println();
   }

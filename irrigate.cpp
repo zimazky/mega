@@ -30,28 +30,30 @@ irrigate::irrigate( uint8_t pw_pin ) {
   pinMode(_pw_pin, OUTPUT);
 }
 
-void irrigate::handler5s(uint32_t unixtime, int8_t is_hydrosystem_ready) {
+void irrigate::handler5s(uint32_t unixtime, bool is_hydrosystem_ready) {
 
-  if(!is_hydrosystem_ready) return;
-  poweron = false;
+  poweron &= 1; // сбрасывам все биты кроме бита ручного запуска
+  
+  uint32_t mmd = Mduration * 60;
+  if((unixtime-beginmanual)>mmd) poweron = 0; // сбрасываем ручной полив, если время полива превысило ограничение
   
   uint32_t localtime = time(unixtime);
-  uint32_t starttime = Astart*600; // Перевод десятиминуток в секунды
-  uint32_t endtime = starttime + Aduration*60; // Перевод минут в секунды
+  uint32_t starttime = Astart*600; // перевод десятиминуток в секунды
+  uint32_t endtime = starttime + Aduration*60; // перевод минут в секунды
   if((localtime>=starttime) && (localtime<endtime)) {
     // время соответствует расписанию
     if(Adays & 128) { // По дням недели
       int8_t wdmask = 1 << weekday(unixtime);
-      if(Adays & wdmask) poweron = true;
+      if(Adays & wdmask) poweron |= 2;
     }
     else {
       int8_t md = monthday(unixtime);
-      if((Adays == 65) && (md & 1)) poweron = true; // нечетное число
-      if((Adays == 64) && (md ^ 1)) poweron = true; // четное число
+      if((Adays == 65) && (md & 1)) poweron |= 2; // нечетное число
+      if((Adays == 64) && (md ^ 1)) poweron |= 2; // четное число
     }
   }
-  
-  digitalWrite(_pw_pin, poweron);
+
+  if(is_hydrosystem_ready && poweron>0) digitalWrite(_pw_pin, 1);
 }
 
 

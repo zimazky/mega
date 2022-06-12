@@ -3,10 +3,8 @@
 
 uint32_t ntpUnixTime (EthernetUDP &udp);
 
-//#define timeServer {192,168,2,1}  
-//#define timeServer {91,226,136,155}  //ntp4.stratum2.ru
-#define timeServer {88,147,254,230}  //ntp4.stratum2.ru
-//#define timeServer {192,168,4,55}  
+#define timeServer {192,168,2,1}  
+//#define timeServer {88,147,254,230}  //ntp4.stratum2.ru
 
 EthernetUDP udp;
 
