@@ -63,7 +63,7 @@ void hk3022::handler5s(uint32_t unixtime) {
         int16_t runtime = unixtime - beginpumpon;
         if( (runtime > pumprunlimit) || ((runtime > pumpinittime) && (pressure < drylimit)) ) { 
           // останавливаем насос из-за превышения допустимого времени работы или недостаточного давления, переход в режим сухого хода
-          poweron = false; mode = 3; begindrymode = unixtime;
+          poweron = false; mode = 4; begindrymode = unixtime;
         }
         else poweron = true;  // давление не достигло заданного значения, проверяем, что мощность подается
       }

@@ -19,8 +19,8 @@
  * Gree/W Zone2 Pwr   A1/D55  Analog                       Digital ~D4       Eth SS for SD-card
  * Green  Hydro Data  A2/D56  Analog                       Digital ~D3       Zone1 LED             Blue
  * Blue/W Hydro Pump  A3/D57  Analog                       Digital ~D2       Zone1 Data            Green
- *           Reserve  A4/D58  Analog                       Digital ~D1/TX0   XXX
- * Blue Irrigate Pwr  A5/D59  Analog                       Digital ~D0/RX0   XXX
+ * Blue Irrigate Pwr  A4/D58  Analog                       Digital ~D1/TX0   XXX
+ *                    A5/D59  Analog                       Digital ~D0/RX0   XXX
  *                    A6/D60  Analog
  *                    A7/D61  Analog                       Digital D14/TX3   
  *                                                         Digital D15/RX3   
@@ -46,6 +46,7 @@
 #include <SD.h>
 #include "zone.h"
 #include "hk3022.h"
+#include "irrigate.h"
 #include "ticker.h"
 #include "webserver.h"
 
@@ -56,9 +57,10 @@
 zone z[NZ] = {zone(2,3,5,A0,300,1,'1'),zone(9,8,7,A1,300,1,'2'),zone(6,'3')};
 
 hk3022 hydro = hk3022(A2, A3);
+irrigate izone = irrigate(A4);
 ticker tck;
 webserver web;
-const char _version[] = "20220613"; // Версия прошивки 27848 bytes
+const char _version[] = "20220617"; // Версия прошивки 27848 bytes
 
 void setup() {
   Serial.begin(9600);
@@ -105,6 +107,7 @@ void h5s() {
   for(int i=0; i<NZ; i++) { z[i].handler5s(); }
 
   hydro.handler5s(tck.unixtime);
+  izone.handler5s(tck.unixtime, hydro.mode&3);
   
   if(tck.starttime) { // Если время было синхронизировано
     char f[20] = {'l','o','g','/',0};
@@ -129,7 +132,15 @@ void h5s() {
     if (logfile) {
       if (logfile.size() == 0) hydro.logdiff(&logfile,tck.unixtime,true);
       else hydro.logdiff(&logfile,tck.unixtime,_fe);
+      logfile.close();
+    }
 
+    // вывод логов по системе автополива log/YYYYMMDD.i0
+    f[13] = 'i'; f[14] = '0'; 
+    logfile = SD.open(f, FILE_WRITE);
+    if (logfile) {
+      if (logfile.size() == 0) izone.logdiff(&logfile,tck.unixtime,true);
+      else izone.logdiff(&logfile,tck.unixtime,_fe);
       logfile.close();
     }
     
