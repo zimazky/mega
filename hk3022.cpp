@@ -23,30 +23,19 @@ hk3022::hk3022( uint8_t pin, uint8_t pw_pin ) {
   pinMode(_pw_pin, OUTPUT);
 }
 
-void hk3022::handler() {
-  if( _btn == 0 ) return; // выходим, если нет кнопки управления
+void hk3022::handler(uint32_t unixtime) {
+  //if( _btn == 0 ) return; // выходим, если нет кнопки управления
   // проверяем кнопку очень часто
-  if( _btn->state() && mode==0 ) mode = 1;
-  else mode = 0;
+  //if( _btn->state() && mode==0 ) mode = 1;
+  //else mode = 0;
   //digitalWrite(_led_pin, mode); для варианта с светодиодом индикации
-}
-
-/*
-// Функция давления для тестирования
-int16_t hk3022::getpressure(uint32_t unixtime) {
-  if(beginpumpon == 0) return 0;
-  int16_t p = hilimit*(unixtime-beginpumpon)/60;
-  if(p>600) p=600;
-  if(unixtime-beginpumpon>100) p=0;
-  return p;
-}
-*/
-
-void hk3022::handler5s(uint32_t unixtime) {
-  pressure = analogRead(_pin);
-  //pressure = getpressure(unixtime);
-  //Serial.print("ut="); Serial.println(unixtime);
-  Serial.print("p="); Serial.println(pressure);
+  
+  int16_t p1 = analogRead(_pin); delay(5);
+  p1 += analogRead(_pin); delay(5);
+  p1 += analogRead(_pin);
+  int16_t m = p1%3;
+  pressure = p1/3;
+  if(m >= 2)  pressure += 1;
 
   poweron = false;
   switch(mode) {
@@ -73,10 +62,25 @@ void hk3022::handler5s(uint32_t unixtime) {
     default: 
       poweron = false;
   }
-  
-  //Serial.print("mode="); Serial.println(mode);
-  //Serial.print("poweron="); Serial.println(poweron);
   digitalWrite(_pw_pin, poweron);
+
+}
+
+/*
+// Функция давления для тестирования
+int16_t hk3022::getpressure(uint32_t unixtime) {
+  if(beginpumpon == 0) return 0;
+  int16_t p = hilimit*(unixtime-beginpumpon)/60;
+  if(p>600) p=600;
+  if(unixtime-beginpumpon>100) p=0;
+  return p;
+}
+*/
+
+void hk3022::handler5s(uint32_t unixtime) {
+  Serial.print("p="); Serial.println(pressure);
+  Serial.print("mode="); Serial.println(mode);
+  Serial.print("poweron="); Serial.println(poweron);
 }
 
 /*
@@ -125,6 +129,7 @@ void hk3022::writeconf(Stream* s) {
 //    1 - Изменение фактического давления
 //    2 - Признак передачи данных без преобразования (0В=0, 5В=1023)
 //    4 - Режим работы и подача мощности на насос
+//        (0 - выключен, 1 - включено слежение до запуска насоса, 2 - включено слежение после запуска насоса, 4 - сухой ход, 8 - бит подачи мощности)
 //    8 - Изменились настройки параметров давления (hilimit, lolimit, drylimit)
 //   16 - Изменились настройки временных параметров (pumpinittime, pumprunlimit, retryinterval)
 //  128 - Признак полной записи (выводятся все поля в виде полного значения)
@@ -157,7 +162,7 @@ void hk3022::logdiff(Stream* s, uint32_t unixtime, bool f) {
     // давление
     if( b & 1) { s->print(';'); s->print( pressure - _p ); _p = pressure; }
     // режим работы и подача мощности
-    if( b & 4) { s->print(';'); s->print( mode + (poweron<<2) ); _pw = poweron; _m = mode; }
+    if( b & 4) { s->print(';'); s->print( mode + (poweron<<3) ); _pw = poweron; _m = mode; }
     // значения параметров давления (hilimit; lolimit; drylimit)
     if( b & 8) { 
       s->print(';'); s->print(hilimit);

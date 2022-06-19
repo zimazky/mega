@@ -29,7 +29,7 @@ public:
   uint16_t retryinterval = 1200; // Интервал времени для повторения запуска насоса в секундах (при сухом колодце). По умолчанию 20 минут 
   
   hk3022(uint8_t pin, uint8_t pw_pin); // Конструктор без кнопки управления
-  void handler();             // Обработчик на каждом цикле
+  void handler(uint32_t unixtime);     // Обработчик на каждом цикле
   int16_t getpressure(uint32_t unixtime); // Функция давления для тестирования
   void handler5s(uint32_t unixtime); // Обработчик каждые 5 сек
   void print(Stream* s);      // Вывод данных в поток
