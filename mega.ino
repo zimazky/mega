@@ -55,6 +55,7 @@
 //DHT22_pin, LED_pin, BUTTON_pin, POWER_pin, Tc, dT, id
 //DHT22_pin, id
 zone z[NZ] = {zone(2,3,5,A0,300,1,'1'),zone(9,8,7,A1,300,1,'2'),zone(6,'3')};
+//zone z[NZ] = {zone(9,8,7,A1,300,1,'2'),zone(6,'3')};
 
 hk3022 hydro = hk3022(A2, A3);
 irrigate izone = irrigate(A4);

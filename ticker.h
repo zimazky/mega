@@ -32,6 +32,7 @@ public:
   uint32_t lastsynctime = 0;
   int32_t  lastsyncdelta = 0; // знаковый
   uint32_t lastsyncinterval = 5000;
+  uint32_t increment = 5000; // корректируемая 5-ти секундная дельта, корректируется после синхронизации
   uint32_t unixtime = 0;
   uint32_t starttime = 0;
   
