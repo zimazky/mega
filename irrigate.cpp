@@ -32,28 +32,35 @@ irrigate::irrigate( uint8_t pw_pin ) {
 
 void irrigate::handler5s(uint32_t unixtime, bool is_hydrosystem_ready) {
 
-  poweron &= 1; // сбрасывам все биты кроме бита ручного запуска
+  poweron &= 2; // сбрасывам все биты кроме бита ручного запуска
   
   uint32_t mmd = Mduration * 60;
-  if((unixtime-beginmanual)>mmd) poweron = 0; // сбрасываем ручной полив, если время полива превысило ограничение
+  //if((unixtime-beginmanual)>mmd) poweron = 0; // сбрасываем ручной полив, если время полива превысило ограничение
   
   uint32_t localtime = time(unixtime);
-  uint32_t starttime = Astart*600; // перевод десятиминуток в секунды
+  uint32_t starttime = Astart;
+  starttime *= 600; // перевод десятиминуток в секунды
   uint32_t endtime = starttime + Aduration*60; // перевод минут в секунды
   if((localtime>=starttime) && (localtime<endtime)) {
     // время соответствует расписанию
     if(Adays & 128) { // По дням недели
       int8_t wdmask = 1 << weekday(unixtime);
-      if(Adays & wdmask) poweron |= 2;
+      if(Adays & wdmask) poweron |= 4;
     }
     else {
       int8_t md = monthday(unixtime);
-      if((Adays == 65) && (md & 1)) poweron |= 2; // нечетное число
-      if((Adays == 64) && (md ^ 1)) poweron |= 2; // четное число
+      if((Adays == 65) && (md & 1)) poweron |= 4; // нечетное число
+      if((Adays == 64) && (md ^ 1)) poweron |= 4; // четное число
     }
   }
 
-  if(is_hydrosystem_ready && poweron>0) digitalWrite(_pw_pin, 1);
+  if(is_hydrosystem_ready && poweron>0) poweron |= 1; // устанавливаем бит открывания клапана
+  Serial.print("ir_unixtime="); Serial.println(unixtime);
+  Serial.print("ir_localtime="); Serial.println(localtime);
+  Serial.print("ir_starttime="); Serial.println(starttime);
+  Serial.print("ir_endtime="); Serial.println(endtime);
+  Serial.print("ir_poweron="); Serial.println(poweron);
+  digitalWrite(_pw_pin, poweron&1);
 }
 
 

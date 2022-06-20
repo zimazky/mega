@@ -18,8 +18,8 @@
  * Oran/W Zone1 Pwr   A0/D54  Analog                       Digital ~D5       Zone1 Btn             Blue/W
  * Gree/W Zone2 Pwr   A1/D55  Analog                       Digital ~D4       Eth SS for SD-card
  * Green  Hydro Data  A2/D56  Analog                       Digital ~D3       Zone1 LED             Blue
- * Blue/W Hydro Pump  A3/D57  Analog                       Digital ~D2       Zone1 Data            Green
- * Blue Irrigate Pwr  A4/D58  Analog                       Digital ~D1/TX0   XXX
+ * Blue   Hydro Pump  A3/D57  Analog                       Digital ~D2       Zone1 Data            Green
+ * Bl/W Irrigate Pwr  A4/D58  Analog                       Digital ~D1/TX0   XXX
  *                    A5/D59  Analog                       Digital ~D0/RX0   XXX
  *                    A6/D60  Analog
  *                    A7/D61  Analog                       Digital D14/TX3   
@@ -61,7 +61,7 @@ hk3022 hydro = hk3022(A2, A3);
 irrigate izone = irrigate(A4);
 ticker tck;
 webserver web;
-const char _version[] = "20220617"; // Версия прошивки 27848 bytes
+const char _version[] = "20220619"; // Версия прошивки 29576 bytes
 
 void setup() {
   Serial.begin(9600);
@@ -83,11 +83,14 @@ void setup() {
   readconf();           // Читаем конфигурацию
 }
 
+//uint32_t lc = 0;
 
 void loop() {
   for(int i=0; i<NZ; i++) { z[i].handler(); }
+  hydro.handler(tck.unixtime);
   web.handler(ajax_handler);
   tck.handler5s( h5s );
+//  lc += 1;
 }
 
 //
@@ -104,11 +107,13 @@ void h5s() {
   Serial.print(tck._t); Serial.println(" ");
   Serial.println(hydro.pressure);
   */
-  
+//  Serial.print("lc="); Serial.println(lc);
+//  lc = 0;
+
   for(int i=0; i<NZ; i++) { z[i].handler5s(); }
 
   hydro.handler5s(tck.unixtime);
-  izone.handler5s(tck.unixtime, hydro.mode&3);
+  izone.handler5s(tck.unixtime, (hydro.mode&3) && tck._is_sync );
   
   if(tck.starttime) { // Если время было синхронизировано
     char f[20] = {'l','o','g','/',0};
