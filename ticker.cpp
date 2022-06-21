@@ -160,7 +160,7 @@ void ticker::sync() {
       lastsyncdelta = _ut - unixtime;             // расхождение времени
       lastsyncinterval = _ut - lastsynctime;      // на интервале
       int32_t sync_correction = lastsyncdelta*5000/lastsyncinterval; // необходимая коррекция на интервале 5 сек
-      increment += sync_correction;
+      increment -= sync_correction;
 
     }
     else {              // синхронизируемся первый раз
