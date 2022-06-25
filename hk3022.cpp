@@ -57,7 +57,7 @@ void hk3022::handler(uint32_t unixtime) {
         else poweron = true;  // давление не достигло заданного значения, проверяем, что мощность подается
       }
       break;
-    case 3: // Состояние сухого хода
+    case 4: // Состояние сухого хода
       if(unixtime-begindrymode >= retryinterval) { poweron = false; mode = 1; } // Подошло время повторной попытки заполнить систему (колодец мог заполнится водой)
     default: 
       poweron = false;
