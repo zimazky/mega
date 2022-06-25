@@ -87,8 +87,8 @@ uint32_t lc = 0;
 
 void loop() {
   for(int i=0; i<NZ; i++) { z[i].handler(); }
-  hydro.handler(tck.unixtime);
   web.handler(ajax_handler);
+  hydro.handler(tck.unixtime);
   tck.handler5s( h5s );
   lc += 1;
 }
