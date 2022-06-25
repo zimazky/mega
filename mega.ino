@@ -48,6 +48,7 @@
 #include "hk3022.h"
 #include "irrigate.h"
 #include "ticker.h"
+#include "datetime.h"
 #include "webserver.h"
 
 #define NZ 2 // Число действующих зон
@@ -61,7 +62,7 @@ hk3022 hydro = hk3022(A2, A3);
 irrigate izone = irrigate(A4);
 ticker tck;
 webserver web;
-const char _version[] = "20220620"; // Версия прошивки 29576 bytes
+const char _version[] = "20220625"; // Версия прошивки 29576 bytes
 
 void setup() {
   Serial.begin(9600);

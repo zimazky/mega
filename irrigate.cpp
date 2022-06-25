@@ -24,6 +24,7 @@
 
 #include "irrigate.h"
 #include "ticker.h"
+#include "datetime.h"
 
 irrigate::irrigate( uint8_t pw_pin ) {
   _pw_pin = pw_pin;
