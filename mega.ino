@@ -83,14 +83,14 @@ void setup() {
   readconf();           // Читаем конфигурацию
 }
 
-//uint32_t lc = 0;
+uint32_t lc = 0;
 
 void loop() {
   for(int i=0; i<NZ; i++) { z[i].handler(); }
   hydro.handler(tck.unixtime);
   web.handler(ajax_handler);
   tck.handler5s( h5s );
-//  lc += 1;
+  lc += 1;
 }
 
 //
@@ -107,8 +107,8 @@ void h5s() {
   Serial.print(tck._t); Serial.println(" ");
   Serial.println(hydro.pressure);
   */
-//  Serial.print("lc="); Serial.println(lc);
-//  lc = 0;
+  Serial.print("lc="); Serial.println(lc);
+  lc = 0;
 
   for(int i=0; i<NZ; i++) { z[i].handler5s(); }
 

@@ -246,7 +246,7 @@ void ticker::print(Print* s) {
     s->print(lastsynctime); s->print(';');      // 2. время последней синхронизации
     s->print(lastsyncdelta); s->print(';');     // 3. ошибка последней синхронизации
     s->print(lastsyncinterval); s->print(';');  // 4. последний интервал синхронизации
-    s->print(_t); s->print(';');                // 5. счетчик миллисекунд контроллера
+    s->print(_t0); s->print(';');                // 5. счетчик миллисекунд контроллера
 }
 
 //
