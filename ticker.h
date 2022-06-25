@@ -23,7 +23,7 @@ public:
 class ticker {
 public:
   uint32_t _t = 0;
-  uint32_t _t5s = 0;
+  uint32_t _t0 = 0; // сохраненный предыдущий счетчик
   bool _is_sync = false; 
   bool _is_overflow = false;
   int8_t _syncf = 0;  // состояние синхронизации в текущем пятисекундном цикле 
@@ -32,7 +32,7 @@ public:
   uint32_t lastsynctime = 0;
   int32_t  lastsyncdelta = 0; // знаковый
   uint32_t lastsyncinterval = 5000;
-  uint32_t increment = 5000; // корректируемая 5-ти секундная дельта, корректируется после синхронизации
+  uint32_t increment = 4958; // 5 секунд, скорректировано с учетом рассинхронизации (42 миллмсекунды за 5 секунд)
   uint32_t unixtime = 0;
   uint32_t starttime = 0;
   
