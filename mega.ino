@@ -62,7 +62,7 @@ hk3022 hydro = hk3022(A2, A3);
 irrigate izone = irrigate(A4);
 ticker tck;
 webserver web;
-const char _version[] = "20220625"; // Версия прошивки 29576 bytes
+const char _version[] = "20220625"; // Версия прошивки 29664 bytes
 
 void setup() {
   Serial.begin(9600);
@@ -84,14 +84,11 @@ void setup() {
   readconf();           // Читаем конфигурацию
 }
 
-uint32_t lc = 0;
-
 void loop() {
   for(int i=0; i<NZ; i++) { z[i].handler(); }
   web.handler(ajax_handler);
   hydro.handler(tck.unixtime);
   tck.handler5s( h5s );
-  lc += 1;
 }
 
 //
@@ -108,8 +105,7 @@ void h5s() {
   Serial.print(tck._t); Serial.println(" ");
   Serial.println(hydro.pressure);
   */
-  Serial.print("lc="); Serial.println(lc);
-  lc = 0;
+  Serial.print("lc="); Serial.println(tck.loopcounter);
 
   for(int i=0; i<NZ; i++) { z[i].handler5s(); }
 

@@ -17,13 +17,16 @@ void ticker::begin() {
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // Обработчик вызывает функцию f() каждые 5 секунд
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-void ticker::handler5s( void (*f)() ) { 
+void ticker::handler5s( void (*f)() ) {
+  _lc++; 
   _t = millis();
   //if(_t < _t0) _is_overflow = true;
   uint32_t dt = _t - _t0;
   uint32_t d = dt/increment;
   uint32_t m = dt%increment;
   if(d < 1) return;
+  loopcounter = _lc;
+  _lc = 0;
   unixtime += d*5;
   _t0 = _t - m;
   f();            // вызов функции
@@ -139,8 +142,10 @@ void ticker::print(Print* s) {
     s->print(starttime); s->print(';');         // 1. время запуска
     s->print(lastsynctime); s->print(';');      // 2. время последней синхронизации
     s->print(lastsyncdelta); s->print(';');     // 3. ошибка последней синхронизации
-    s->print(lastsyncinterval); s->print(';');  // 4. последний интервал синхронизации
-    s->print(_t0); s->print(';');                // 5. счетчик миллисекунд контроллера
+//    s->print(lastsyncinterval); s->print(';');  // 4. последний интервал синхронизации
+    s->print(_t0); s->print(';');               // 4. счетчик миллисекунд контроллера
+    s->print(loopcounter); s->print(';');       // 5. счетчик циклов выполнения за 5 сек
+
 }
 
 //
