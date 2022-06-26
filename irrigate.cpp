@@ -66,7 +66,16 @@ void irrigate::handler5s(uint32_t unixtime, bool is_hydrosystem_ready) {
 
 
 void irrigate::print(Stream* s) {
-//    s->print(pressure); s->print(';');             // 0. давление
+  s->print(";I;0");                          // 0. Тип зоны контроллера
+                                             // 1. Идентификатор зоны
+  print_with_semicolon(s, poweron);          // 2. Состояние программ и подачи мощности на клапан
+  print_with_semicolon(s, Start);            // 3. Параметры начала программ полива 
+                                             //    (каждый байт соответствует программе)
+  print_with_semicolon(s, Duration);         // 4. Параметры продолжительности программ полива
+                                             //    (каждый байт соответствует программе)
+  print_with_semicolon(s, Days);             // 5. Параметры дней полива в программах
+                                             //    (каждый байт соответствует программе)
+  print_with_semicolon(s, Mduration);        // 6. Продолжительность ручного полива
 }
 
 void irrigate::writeconf(Stream* s) {

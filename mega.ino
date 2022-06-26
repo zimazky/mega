@@ -63,7 +63,7 @@ hk3022 hydro = hk3022(A2, A3);
 irrigate izone = irrigate(A4);
 ticker tck;
 webserver web;
-const char _version[] = "20220626"; // Версия прошивки 29408 bytes
+const char _version[] = "20220626"; // Версия прошивки 29568 bytes
 
 void setup() {
   Serial.begin(9600);
@@ -252,10 +252,6 @@ void ajax_handler(EthernetClient client, char* req) {
     // 0:version, 1:numofzones,
     // 2:unixtime, 3:starttime, 4:lastsynctime, 5:lastsyncdelta, 6:lastsyncinterval, 7:tickcounter
     // 8:loopcounter
-    // 8:t1, 9:tc1, 10:h1, 11:m1, 12:p1, 13:dt1, 14:s1, 
-    // 15:t2, 16:tc2, 17:h2, 18:m2, 19:p2, 20:dt2, 21:s2,
-    // 22:t3, 23:tc3, 24:h3, 25:m3, 26:p3, 27:dt3, 28:s3,
-    // 29:p_hydro
 
     // 0.версия прошивки
     client.print(_version);
@@ -268,7 +264,7 @@ void ajax_handler(EthernetClient client, char* req) {
     // параметры системы водоснабжения
     hydro.print(&client);
     // параметры зон полива
-    // izone.print(&client);
+    izone.print(&client);
     client.println();
     return;
   }

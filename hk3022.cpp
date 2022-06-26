@@ -103,7 +103,14 @@ void hk3022::read() {
 void hk3022::print(Stream* s) {
   s->print(";H;0");                          // 0. Тип зоны контроллера
                                              // 1. Идентификатор зоны
-  print_with_semicolon(s, pressure);         // 2. давление
+  print_with_semicolon(s, pressure);         // 2. Давление
+  print_with_semicolon(s, mode);             // 3. Режим
+  print_with_semicolon(s, hilimit);          // 4. Верхняя граница
+  print_with_semicolon(s, lolimit);          // 5. Нижняя граница
+  print_with_semicolon(s, drylimit);         // 6. Граница сухого хода
+  print_with_semicolon(s, pumpinittime);     // 7. Время инициализации насоса в секундах (для достижения давления выше предела сухого хода)
+  print_with_semicolon(s, pumprunlimit);     // 8. Предел времени непрерывной работы насоса в секундах (исключение длительной работы на сухом ходу)
+  print_with_semicolon(s, retryinterval);    // 9. Интервал времени для повторения запуска насоса в секундах (при сухом колодце)
 }
 
 void hk3022::writeconf(Stream* s) {
