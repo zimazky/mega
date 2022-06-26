@@ -23,6 +23,7 @@
 //
 
 #include "zone.h"
+#include "utils.h"
 
 // Конструктор для зоны без управления
 zone::zone(uint8_t dht_pin, char i) {
@@ -81,20 +82,15 @@ void zone::handler5s() {
 }
 
 void zone::print(Stream* s) {
-    s->print("Z;");                               // 0. тип зоны
-    s->print(id); s->print(';');                  // 1. идентификатор зоны
-    s->print(temperature); s->print(';');         // 2. температура t
-    s->print(target_temperature); s->print(';');  // 3. заданная температура tc
-    s->print(humidity); s->print(';');            // 4. влажность h
-    s->print(mode); s->print(';');                // 5. режим работы m
-    s->print(poweron); s->print(';');             // 6. подача энергии p
-    s->print(delta); s->print(';');               // 7. гистерезис теипературы dt
-    s->print(dht_status); s->print(';');          // 8. состояние датчика s
-}
-
-void zone::println(Stream* s) {
-    print(s);
-    s->println();
+  s->print(";Z");                               // 0. тип зоны
+  print_with_semicolon(s,id);                   // 1. идентификатор зоны
+  print_with_semicolon(s,temperature);          // 2. температура t
+  print_with_semicolon(s,target_temperature);   // 3. заданная температура tc
+  print_with_semicolon(s,humidity);             // 4. влажность h
+  print_with_semicolon(s,mode);                 // 5. режим работы m
+  print_with_semicolon(s,poweron);              // 6. подача энергии p
+  print_with_semicolon(s,delta);                // 7. гистерезис теипературы dt
+  print_with_semicolon(s,dht_status);           // 8. состояние датчика s
 }
 
 void zone::writeconf(Stream* s) {
@@ -147,17 +143,17 @@ void zone::logdiff(Stream* s, uint32_t unixtime, bool f) {
     // флаги
     s->print(b);
     // unixtime
-    s->print(';'); s->print( unixtime - _ut); _ut = unixtime;
+    print_with_semicolon(s, unixtime-_ut); _ut = unixtime;
     // температура
-    if( b & 1) { s->print(';'); s->print( temperature - _t ); _t = temperature; }
+    if( b & 1) { print_with_semicolon(s, temperature-_t ); _t = temperature; }
     // влажность
-    if( b & 2) { s->print(';'); s->print( humidity - _h ); _h = humidity; }
+    if( b & 2) { print_with_semicolon(s, humidity-_h ); _h = humidity; }
     // заданная температура
-    if( b & 16) { s->print(';'); s->print(target_temperature); _tc = target_temperature; }
+    if( b & 16) { print_with_semicolon(s, target_temperature); _tc = target_temperature; }
     // гистерезис теипературы
-    if( b & 32) { s->print(';'); s->print(delta); _dt = delta; }
+    if( b & 32) { print_with_semicolon(s, delta); _dt = delta; }
     // состояние датчика
-    if( b & 64) { s->print(';'); s->print(dht_status); _s = dht_status; }
+    if( b & 64) { print_with_semicolon(s, dht_status); _s = dht_status; }
     // конец строки
     s->println();
   }

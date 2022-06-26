@@ -25,6 +25,7 @@
 #include "irrigate.h"
 #include "ticker.h"
 #include "datetime.h"
+#include "utils.h"
 
 irrigate::irrigate( uint8_t pw_pin ) {
   _pw_pin = pw_pin;
@@ -69,11 +70,6 @@ void irrigate::print(Stream* s) {
 //    s->print(pressure); s->print(';');             // 0. давление
 }
 
-void irrigate::println(Stream* s) {
-    print(s);
-    s->println();
-}
-
 void irrigate::writeconf(Stream* s) {
   return;
 }
@@ -116,16 +112,16 @@ void irrigate::logdiff(Stream* s, uint32_t unixtime, bool f) {
     // флаги
     s->print(b);
     // unixtime
-    s->print(';'); s->print(unixtime - _ut); _ut = unixtime;
+    print_with_semicolon(s, unixtime-_ut); _ut = unixtime;
     // вкючение программы или ручного режима
-    if( b & 1) { s->print(';'); s->print(poweron); _p = poweron; }
+    if( b & 1) { print_with_semicolon(s, poweron); _p = poweron; }
     // изменение параметров ручного режима
-    if( b & 2) { s->print(';'); s->print(Mduration); _md = Mduration; }
+    if( b & 2) { print_with_semicolon(s, Mduration); _md = Mduration; }
     // изменение параметров программы A
     if( b & 4) { 
-      s->print(';'); s->print(Astart); 
-      s->print(';'); s->print(Aduration); 
-      s->print(';'); s->print(Adays); 
+      print_with_semicolon(s, Astart); 
+      print_with_semicolon(s, Aduration); 
+      print_with_semicolon(s, Adays); 
       _as = Astart; _ad = Aduration; _ads = Adays; 
     }
     // конец строки

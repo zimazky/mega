@@ -50,6 +50,7 @@
 #include "ticker.h"
 #include "datetime.h"
 #include "webserver.h"
+#include "utils.h"
 
 #define NZ 2 // Число действующих зон
 
@@ -62,7 +63,7 @@ hk3022 hydro = hk3022(A2, A3);
 irrigate izone = irrigate(A4);
 ticker tck;
 webserver web;
-const char _version[] = "20220625"; // Версия прошивки 29664 bytes
+const char _version[] = "20220626"; // Версия прошивки 29472 bytes
 
 void setup() {
   Serial.begin(9600);
@@ -250,35 +251,24 @@ void ajax_handler(EthernetClient client, char* req) {
     // новый вариант вывода
     // 0:version, 1:numofzones,
     // 2:unixtime, 3:starttime, 4:lastsynctime, 5:lastsyncdelta, 6:lastsyncinterval, 7:tickcounter
+    // 8:loopcounter
     // 8:t1, 9:tc1, 10:h1, 11:m1, 12:p1, 13:dt1, 14:s1, 
     // 15:t2, 16:tc2, 17:h2, 18:m2, 19:p2, 20:dt2, 21:s2,
     // 22:t3, 23:tc3, 24:h3, 25:m3, 26:p3, 27:dt3, 28:s3,
     // 29:p_hydro
 
-    //client.print(_version); 
-    client.print(_version); client.print(';');
-      // 0.версия прошивки
-      // 1.число зон
-    client.print(NZ); client.print(';');
+    // 0.версия прошивки
+    client.print(_version);
+    // 1.число зон
+    print_with_semicolon(&client,NZ);
+    // 2-8 параметры тикера
     tck.print(&client);
-      // 2.текущее время
-      // 3.время запуска
-      // 4.время последней синхронизации
-      // 5.ошибка последней синхронизации
-      // 6.последний интервал синхронизации
-      // 7.счетчик миллисекунд контроллера
-    for(int i=0;i<NZ;i++) {
-      z[i].print(&client);
-      // 8. температура1 t1
-      // 9. заданная температура1 tc1
-      // 10. влажность1 h1
-      // 11. режим работы1 m1
-      // 12. подача энергии p1
-      // 13. гистерезис температуры dt1
-      // 14. состояние датчика s1
-    }
+    // зоны термоконтроллера
+    for(int i=0;i<NZ;i++) z[i].print(&client);
+    // параметры системы водоснабжения
     hydro.print(&client);
-      // 29. давление в системе водоснабжения
+    // параметры зон полива
+    // izone.print(&client);
     client.println();
     return;
   }

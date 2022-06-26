@@ -10,8 +10,15 @@
 
 #include <Arduino.h>
 
-template<class T> void semicolon_print(Stream* s, T arg);
-
+void print_with_semicolon(Stream* s, const String &arg);
+void print_with_semicolon(Stream* s, const char arg[]);
+void print_with_semicolon(Stream* s, char arg);
+void print_with_semicolon(Stream* s, unsigned char arg);
+void print_with_semicolon(Stream* s, int arg);
+void print_with_semicolon(Stream* s, unsigned int arg);
+void print_with_semicolon(Stream* s, long arg);
+void print_with_semicolon(Stream* s, unsigned long arg);
+void print_with_semicolon(Stream* s, double arg);
 
 #endif
 //

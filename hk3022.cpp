@@ -15,6 +15,7 @@
  */
 
 #include "hk3022.h"
+#include "utils.h"
 
 hk3022::hk3022( uint8_t pin, uint8_t pw_pin ) {
   _pin = pin;
@@ -100,14 +101,9 @@ void hk3022::read() {
 */
 
 void hk3022::print(Stream* s) {
-    s->print("H;0;");                             // 0. Тип зоны контроллера
-                                                  // 1. Идентификатор зоны
-    s->print(pressure); s->print(';');            // 2. давление
-}
-
-void hk3022::println(Stream* s) {
-    print(s);
-    s->println();
+  s->print(";H;0");                          // 0. Тип зоны контроллера
+                                             // 1. Идентификатор зоны
+  print_with_semicolon(s, pressure);         // 2. давление
 }
 
 void hk3022::writeconf(Stream* s) {
@@ -160,27 +156,25 @@ void hk3022::logdiff(Stream* s, uint32_t unixtime, bool f) {
     // флаги
     s->print(b);
     // unixtime
-    s->print(';'); s->print( unixtime - _ut); _ut = unixtime;
+    print_with_semicolon(s, unixtime-_ut); _ut = unixtime;
     // давление
-    if( b & 1) { s->print(';'); s->print( pressure - _p ); _p = pressure; }
+    if( b & 1) { print_with_semicolon(s, pressure-_p); _p = pressure; }
     // режим работы и подача мощности
-    if( b & 4) { s->print(';'); s->print( mode + (poweron<<3) ); _pw = poweron; _m = mode; }
+    if( b & 4) { print_with_semicolon(s, mode+(poweron<<3)); _pw = poweron; _m = mode; }
     // значения параметров давления (hilimit; lolimit; drylimit)
     if( b & 8) { 
-      s->print(';'); s->print(hilimit);
-      s->print(';'); s->print(lolimit);
-      s->print(';'); s->print(drylimit);
+      print_with_semicolon(s, hilimit);
+      print_with_semicolon(s, lolimit);
+      print_with_semicolon(s, drylimit);
       _hl = hilimit; _ll = lolimit; _dl = drylimit;
     }
     // значения временных параметров (pumpinittime; pumprunlimit; retryinterval)
     if( b & 16) { 
-      s->print(';'); s->print(pumpinittime);
-      s->print(';'); s->print(pumprunlimit);
-      s->print(';'); s->print(retryinterval);
+      print_with_semicolon(s, pumpinittime);
+      print_with_semicolon(s, pumprunlimit);
+      print_with_semicolon(s, retryinterval);
       _pit = pumpinittime; _prl = pumprunlimit; _ri = retryinterval;
     }
-
-
     // конец строки
     s->println();
   }

@@ -1,4 +1,5 @@
 #include "ticker.h"
+#include "utils.h"
 #include <ethudp.h>
 
 uint32_t ntpUnixTime (EthernetUDP &udp);
@@ -137,15 +138,14 @@ uint32_t ntpUnixTime (EthernetUDP &udp)
   return time - 2208988800ul;   // convert NTP time to Unix time
 }
 
-void ticker::print(Print* s) {
-    s->print(unixtime); s->print(';');          // 0. текущее время
-    s->print(starttime); s->print(';');         // 1. время запуска
-    s->print(lastsynctime); s->print(';');      // 2. время последней синхронизации
-    s->print(lastsyncdelta); s->print(';');     // 3. ошибка последней синхронизации
-//    s->print(lastsyncinterval); s->print(';');  // 4. последний интервал синхронизации
-    s->print(_t0); s->print(';');               // 4. счетчик миллисекунд контроллера
-    s->print(loopcounter); s->print(';');       // 5. счетчик циклов выполнения за 5 сек
-
+void ticker::print(Stream* s) {
+  print_with_semicolon(s,unixtime);          // 0. текущее время
+  print_with_semicolon(s,starttime);         // 1. время запуска
+  print_with_semicolon(s,lastsynctime);      // 2. время последней синхронизации
+  print_with_semicolon(s,lastsyncdelta);     // 3. ошибка последней синхронизации
+  print_with_semicolon(s,lastsyncinterval);  // 4. последний интервал синхронизации
+  print_with_semicolon(s,_t0);               // 5. счетчик миллисекунд контроллера
+  print_with_semicolon(s,loopcounter);       // 6. счетчик циклов выполнения за 5 сек
 }
 
 //

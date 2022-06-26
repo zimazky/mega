@@ -35,7 +35,6 @@ public:
   irrigate( uint8_t _pw_pin ); // Конструктор без кнопки управления
   void handler5s(uint32_t unixtime, bool is_hydrosystem_ready); // Обработчик каждые 5 сек
   void print(Stream* s);      // Вывод данных в поток
-  void println(Stream* s);    // Вывод данных в поток с переводом строки
   void writeconf(Stream* s);  // Запись конфигурации в поток
   void logdiff(Stream* s, uint32_t unixtime, bool f);  // Вывод логов в поток
     

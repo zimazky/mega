@@ -24,7 +24,7 @@ public:
   void begin();
   void handler5s( void (*f)() );
   void sync();
-  void print(Print* s);     // Вывод данных в поток
+  void print(Stream* s);     // Вывод данных в поток
 };
 
 #endif
