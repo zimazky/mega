@@ -63,7 +63,7 @@ hk3022 hydro = hk3022(A2, A3);
 irrigate izone = irrigate(A4);
 ticker tck;
 webserver web;
-const char _version[] = "20220626"; // Версия прошивки 29472 bytes
+const char _version[] = "20220626"; // Версия прошивки 29408 bytes
 
 void setup() {
   Serial.begin(9600);

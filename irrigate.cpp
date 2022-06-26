@@ -40,27 +40,26 @@ void irrigate::handler5s(uint32_t unixtime, bool is_hydrosystem_ready) {
   //if((unixtime-beginmanual)>mmd) poweron = 0; // сбрасываем ручной полив, если время полива превысило ограничение
   
   uint32_t localtime = time(unixtime);
-  uint32_t starttime = Astart;
-  starttime *= 600; // перевод десятиминуток в секунды
-  uint32_t endtime = starttime + Aduration*60; // перевод минут в секунды
-  if((localtime>=starttime) && (localtime<endtime)) {
-    // время соответствует расписанию
-    if(Adays & 128) { // По дням недели
-      int8_t wdmask = 1 << weekday(unixtime);
-      if(Adays & wdmask) poweron |= 4;
-    }
-    else {
-      int8_t md = monthday(unixtime);
-      if((Adays == 65) && (md & 1)) poweron |= 4; // нечетное число
-      if((Adays == 64) && (md ^ 1)) poweron |= 4; // четное число
+  for(int8_t i=0, mask=4; i<2; i++, mask<<=1) {
+    uint32_t starttime = start[i];
+    starttime *= 600; // перевод десятиминуток в секунды
+    uint32_t endtime = starttime + duration[i]*60; // перевод минут в секунды
+    if((localtime>=starttime) && (localtime<endtime)) {
+      // время соответствует расписанию
+      if(days[i] & 128) { // По дням недели
+        int8_t wdmask = 1 << weekday(unixtime);
+        if(days[i] & wdmask) poweron |= mask;
+      }
+      else {
+        int8_t md = monthday(unixtime);
+        if((days[i] == 65) && (md & 1)) poweron |= mask; // нечетное число
+        if((days[i] == 64) && (md ^ 1)) poweron |= mask; // четное число
+      }
     }
   }
 
   if(is_hydrosystem_ready && poweron>0) poweron |= 1; // устанавливаем бит открывания клапана
   Serial.print("ir_unixtime="); Serial.println(unixtime);
-  Serial.print("ir_localtime="); Serial.println(localtime);
-  Serial.print("ir_starttime="); Serial.println(starttime);
-  Serial.print("ir_endtime="); Serial.println(endtime);
   Serial.print("ir_poweron="); Serial.println(poweron);
   digitalWrite(_pw_pin, poweron&1);
 }
@@ -84,7 +83,7 @@ void irrigate::writeconf(Stream* s) {
 //    1 - Активация программ или ручного режима
 //    2 - Изменение настроек ручного режима
 //    4 - Изменение настроек программы A
-//    8 - (Резерв) Изменение настроек программы B
+//    8 - Изменение настроек программы B
 //   16 - (Резерв) Изменение настроек программы C
 //   32 - (Резерв) Изменение настроек программы D
 //   64 - (Резерв)
@@ -100,12 +99,14 @@ void irrigate::logdiff(Stream* s, uint32_t unixtime, bool f) {
   
   uint8_t b = 0;
   // полная запись
-  if(f) { _ut = 0; _p = 0; _md = 0; _as = 0; _ad = 0; _ads = 0; b = 128; }
+  if(f) { _ut = 0; _p = 0; _md = 0; _As = 0; _Ad = 0; _Ads = 0; b = 128; }
   
   // блок определения байта флагов
   if( poweron != _p ) b += 1;
   if( Mduration != _md ) b += 2;
-  if( (Astart!=_as) || (Aduration!=_ad) || (Adays!=_ads) ) b += 4;
+  for(int8_t i=0,mask=4;i<2;i++,mask<<=1) {
+    if( (start[i]!=_as[i]) || (duration[i]!=_ad[i]) || (days[i]!=_ads[i]) ) b += mask;
+  }
 
   // блок вывода
   if( b ) {
@@ -118,11 +119,13 @@ void irrigate::logdiff(Stream* s, uint32_t unixtime, bool f) {
     // изменение параметров ручного режима
     if( b & 2) { print_with_semicolon(s, Mduration); _md = Mduration; }
     // изменение параметров программы A
-    if( b & 4) { 
-      print_with_semicolon(s, Astart); 
-      print_with_semicolon(s, Aduration); 
-      print_with_semicolon(s, Adays); 
-      _as = Astart; _ad = Aduration; _ads = Adays; 
+    for(int8_t i=0,mask=4;i<2;i++,mask<<=1) {
+      if( b & mask) { 
+        print_with_semicolon(s, start[i]);
+        print_with_semicolon(s, duration[i]);
+        print_with_semicolon(s, days[i]);
+        _as[i] = start[i]; _ad[i] = duration[i]; _ads[i] = days[i]; 
+      }
     }
     // конец строки
     s->println();
