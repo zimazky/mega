@@ -100,7 +100,9 @@ void hk3022::read() {
 */
 
 void hk3022::print(Stream* s) {
-    s->print(pressure); s->print(';');             // 0. давление
+    s->print("H;0;");                             // 0. Тип зоны контроллера
+                                                  // 1. Идентификатор зоны
+    s->print(pressure); s->print(';');            // 2. давление
 }
 
 void hk3022::println(Stream* s) {

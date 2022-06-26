@@ -52,42 +52,44 @@ void zone::handler() {
   
 void zone::handler5s() {
     
-    // READ DATA
-    dht_status = _dht.read22(_dht_pin);
-    temperature = _dht.temperature;
-    humidity = _dht.humidity;
-    //Serial.println((int)_btn);
+  // READ DATA
+  dht_status = _dht.read22(_dht_pin);
+  temperature = _dht.temperature;
+  humidity = _dht.humidity;
+
 	if( _btn == 0 ) return; // выходим, если датчик без управления
-    if( dht_status == DHTLIB_OK ) {
-      if( mode ) { 
-        if( is_tc ) { // Состояние после достижения заданной температуры tc, но температура еще не упала ниже нижней границы
-          if( temperature < (target_temperature-delta) ) { poweron = true; is_tc = false; } // температура упала ниже нижней границы
-          else poweron = false; // проверяем, что мощность не подается
-        }
-        else {  // Состояние до достижения заданной температуры
-          if( temperature >= target_temperature ) { poweron = false; is_tc = true; } // температура достигла заданного значения
-          else poweron = true;  // температура не достигла заданного значения, проверяем, что мощность подается
-        }
+  if( dht_status == DHTLIB_OK ) {
+    if( mode ) { 
+      if( is_tc ) { // Состояние после достижения заданной температуры tc, но температура еще не упала ниже нижней границы
+        if( temperature < (target_temperature-delta) ) { poweron = true; is_tc = false; } // температура упала ниже нижней границы
+        else poweron = false; // проверяем, что мощность не подается
       }
-      else {  // если режим поддержания температуры выключен, мощность на обогреватели не подаем
-        poweron = false;
-        is_tc = false;
+      else {  // Состояние до достижения заданной температуры
+        if( temperature >= target_temperature ) { poweron = false; is_tc = true; } // температура достигла заданного значения
+        else poweron = true;  // температура не достигла заданного значения, проверяем, что мощность подается
       }
     }
-    else {
-      poweron = false; //если датчик в состоянии ошибки выключаем питание
+    else {  // если режим поддержания температуры выключен, мощность на обогреватели не подаем
+      poweron = false;
+      is_tc = false;
     }
-    digitalWrite(_pw_pin, poweron);
   }
+  else {
+    poweron = false; //если датчик в состоянии ошибки выключаем питание
+  }
+  digitalWrite(_pw_pin, poweron);
+}
 
 void zone::print(Stream* s) {
-    s->print(temperature); s->print(';');          // 0. температура t
-    s->print(target_temperature); s->print(';');   // 1. заданная температура tc
-    s->print(humidity); s->print(';');             // 2. влажность h
-    s->print(mode); s->print(';');                 // 3. режим работы m
-    s->print(poweron); s->print(';');              // 4. подача энергии p
-    s->print(delta); s->print(';');                // 5. гистерезис теипературы dt
-    s->print(dht_status); s->print(';');           // 6. состояние датчика s
+    s->print("Z;");                               // 0. тип зоны
+    s->print(id); s->print(';');                  // 1. идентификатор зоны
+    s->print(temperature); s->print(';');         // 2. температура t
+    s->print(target_temperature); s->print(';');  // 3. заданная температура tc
+    s->print(humidity); s->print(';');            // 4. влажность h
+    s->print(mode); s->print(';');                // 5. режим работы m
+    s->print(poweron); s->print(';');             // 6. подача энергии p
+    s->print(delta); s->print(';');               // 7. гистерезис теипературы dt
+    s->print(dht_status); s->print(';');          // 8. состояние датчика s
 }
 
 void zone::println(Stream* s) {
