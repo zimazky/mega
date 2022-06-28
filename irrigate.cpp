@@ -27,6 +27,9 @@
 #include "datetime.h"
 #include "utils.h"
 
+program::program(uint16_t A) { all = A; }
+program::program(uint8_t A, uint8_t B) { all = A + (B<<8); }
+
 irrigate::irrigate( uint8_t pw_pin ) {
   _pw_pin = pw_pin;
   pinMode(_pw_pin, OUTPUT);
@@ -41,19 +44,20 @@ void irrigate::handler5s(uint32_t unixtime, bool is_hydrosystem_ready) {
   
   uint32_t localtime = time(unixtime);
   for(int8_t i=0, mask=4; i<2; i++, mask<<=1) {
-    uint32_t starttime = start[i];
+    uint32_t starttime = start.a[i];
+    //Serial.print(i);Serial.print("=");Serial.println(start.a[i]);
     starttime *= 600; // перевод десятиминуток в секунды
-    uint32_t endtime = starttime + duration[i]*60; // перевод минут в секунды
+    uint32_t endtime = starttime + duration.a[i]*60; // перевод минут в секунды
     if((localtime>=starttime) && (localtime<endtime)) {
       // время соответствует расписанию
-      if(days[i] & 128) { // По дням недели
+      if(days.a[i] & 128) { // По дням недели
         int8_t wdmask = 1 << weekday(unixtime);
-        if(days[i] & wdmask) poweron |= mask;
+        if(days.a[i] & wdmask) poweron |= mask;
       }
       else {
         int8_t md = monthday(unixtime);
-        if((days[i] == 65) && (md & 1)) poweron |= mask; // нечетное число
-        if((days[i] == 64) && (md ^ 1)) poweron |= mask; // четное число
+        if((days.a[i] == 65) && (md & 1)) poweron |= mask; // нечетное число
+        if((days.a[i] == 64) && (md ^ 1)) poweron |= mask; // четное число
       }
     }
   }
@@ -69,11 +73,11 @@ void irrigate::print(Stream* s) {
   s->print(";I;0");                          // 0. Тип зоны контроллера
                                              // 1. Идентификатор зоны
   print_with_semicolon(s, poweron);          // 2. Состояние программ и подачи мощности на клапан
-  print_with_semicolon(s, Start);            // 3. Параметры начала программ полива 
+  print_with_semicolon(s, start.all);        // 3. Параметры начала программ полива 
                                              //    (каждый байт соответствует программе)
-  print_with_semicolon(s, Duration);         // 4. Параметры продолжительности программ полива
+  print_with_semicolon(s, duration.all);     // 4. Параметры продолжительности программ полива
                                              //    (каждый байт соответствует программе)
-  print_with_semicolon(s, Days);             // 5. Параметры дней полива в программах
+  print_with_semicolon(s, days.all);         // 5. Параметры дней полива в программах
                                              //    (каждый байт соответствует программе)
   print_with_semicolon(s, Mduration);        // 6. Продолжительность ручного полива
 }
@@ -108,13 +112,13 @@ void irrigate::logdiff(Stream* s, uint32_t unixtime, bool f) {
   
   uint8_t b = 0;
   // полная запись
-  if(f) { _ut = 0; _p = 0; _md = 0; _As = 0; _Ad = 0; _Ads = 0; b = 128; }
+  if(f) { _ut = 0; _p = 0; _md = 0; _as.all = 0; _ad.all = 0; _ads.all = 0; b = 128; }
   
   // блок определения байта флагов
   if( poweron != _p ) b += 1;
   if( Mduration != _md ) b += 2;
   for(int8_t i=0,mask=4;i<2;i++,mask<<=1) {
-    if( (start[i]!=_as[i]) || (duration[i]!=_ad[i]) || (days[i]!=_ads[i]) ) b += mask;
+    if( (start.a[i]!=_as.a[i]) || (duration.a[i]!=_ad.a[i]) || (days.a[i]!=_ads.a[i]) ) b += mask;
   }
 
   // блок вывода
@@ -130,10 +134,10 @@ void irrigate::logdiff(Stream* s, uint32_t unixtime, bool f) {
     // изменение параметров программы A
     for(int8_t i=0,mask=4;i<2;i++,mask<<=1) {
       if( b & mask) { 
-        print_with_semicolon(s, start[i]);
-        print_with_semicolon(s, duration[i]);
-        print_with_semicolon(s, days[i]);
-        _as[i] = start[i]; _ad[i] = duration[i]; _ads[i] = days[i]; 
+        print_with_semicolon(s, start.a[i]);
+        print_with_semicolon(s, duration.a[i]);
+        print_with_semicolon(s, days.a[i]);
+        _as.a[i] = start.a[i]; _ad.a[i] = duration.a[i]; _ads.a[i] = days.a[i]; 
       }
     }
     // конец строки

@@ -10,6 +10,13 @@
 
 #include <Arduino.h>
 
+union program {
+  program(uint16_t A);
+  program(uint8_t A, uint8_t B);
+  uint16_t all;
+  uint8_t a[2];
+};
+
 class irrigate {
 public:  
   // Параметры ручного запуска
@@ -18,18 +25,9 @@ public:
 
   // Для начала будем использовать одну автоматическую программу A. В дальнейшем можно добавить программы B, C, D
   // Параметры программы A,B
-  union {
-    uint16_t Start;
-    uint8_t start[2] = {66,132};     // Время начала запуска в десятиминутках (0-143, 255 - выключен)
-  };
-  union {
-    uint16_t Duration;
-    uint8_t duration[2] = {60,60};   // Продолжительность полива в минутах (от 1 до 255 минут)
-  };
-  union {
-    uint16_t Days;
-    uint8_t days[2] = {255,255};     // Селектор дней полива:
-  };
+  program start = program(66,255);  // Время начала запуска в десятиминутках (0-143, 255 - выключен)
+  program duration = program(60,60);// Продолжительность полива в минутах (от 1 до 255 минут)
+  program days = program(255,255);  // Селектор дней полива:
                               //   >127 - маска дней недели
                               //    128 - программа выключена (все дни недели отключены)
                               //    255 - ежедневно (все дни недели включены)
@@ -53,18 +51,9 @@ private:
   uint32_t _ut;
   uint8_t _p = 0;
   uint8_t _md = 0;
-  union {
-    uint8_t _as[2];
-    uint16_t _As = 0;
-  };
-  union {
-    uint8_t _ad[2];
-    uint16_t _Ad = 0;
-  };
-  union {
-    uint8_t _ads[2];
-    uint16_t _Ads = 0;
-  };
+  program _as = program(0);
+  program _ad = program(0);
+  program _ads = program(0);
 };
 
 #endif
