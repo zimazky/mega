@@ -10,7 +10,7 @@
  * В программе задается:
  * 1. int8_t Время запуска программы полива в десятиминутках (от 0 до 143), или признак неактивности. Значение 255 означает, что программа выключена.
  * 2. int8_t Селектор дней полива (по дням недели, четные/нечетные, интервальный полив): 
- *      1 M T W t F S s  - дни недели
+ *      1 s S F t W T M  - дни недели (1 - Mon, 2 - Tue, 4 - Wed, 8 - Thu, 16 - Fri, 32 - Sat, 64 - Sun)
  *      0 1 0 0 0 0 0 0  - четные
  *      0 1 0 0 0 0 0 1  - нечетные
  *      0 1 X X X X X X  - (резерв) XXXXXX больше 1
@@ -43,16 +43,21 @@ void irrigate::handler5s(uint32_t unixtime, bool is_hydrosystem_ready) {
   //if((unixtime-beginmanual)>mmd) poweron = 0; // сбрасываем ручной полив, если время полива превысило ограничение
   
   uint32_t localtime = time(unixtime);
+//Serial.print("ir_localtime="); Serial.println(localtime);
   for(int8_t i=0, mask=4; i<2; i++, mask<<=1) {
     uint32_t starttime = start.a[i];
-    //Serial.print(i);Serial.print("=");Serial.println(start.a[i]);
+//Serial.print(i);Serial.print("=");Serial.println(start.a[i]);
     starttime *= 600; // перевод десятиминуток в секунды
     uint32_t endtime = starttime + duration.a[i]*60; // перевод минут в секунды
+//Serial.print("ir_starttime="); Serial.println(starttime);
+//Serial.print("ir_endtime="); Serial.println(endtime);
     if((localtime>=starttime) && (localtime<endtime)) {
       // время соответствует расписанию
       if(days.a[i] & 128) { // По дням недели
         int8_t wdmask = 1 << weekday(unixtime);
         if(days.a[i] & wdmask) poweron |= mask;
+//Serial.print("ir_weekday="); Serial.println(weekday(unixtime));
+//Serial.print("ir_wdmask="); Serial.println(wdmask);
       }
       else {
         int8_t md = monthday(unixtime);

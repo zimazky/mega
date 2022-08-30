@@ -4,15 +4,16 @@ const uint8_t timezone = 3; // UTC+3
 
 // Функция определения времени
 uint32_t time(uint32_t unixtime) {
-  uint32_t localtime = unixtime + 3600*timezone;
-  localtime %= 86400;
-  return localtime;
+  unixtime += 3600*timezone;
+  unixtime %= 86400;
+  return unixtime;
 }
 // Функция определения дня недели
 int8_t weekday(uint32_t unixtime) {
   unixtime += 3600*timezone;
   uint32_t days = unixtime/86400;
-  int8_t wd = 4 + days%7;
+  int8_t wd = (4 + days)%7;
+  return wd;
 }
 // Функция определения дня месяца
 int8_t monthday(uint32_t unixtime) {

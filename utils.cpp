@@ -28,4 +28,8 @@ void print_with_semicolon(Stream* s, double arg) {
   s->print(';');s->print(arg);
 }
 
-
+/*
+void print_param(Stream* s, const char name[], unsigned long arg) {
+  s->print(name);s->println(arg);
+}
+*/
