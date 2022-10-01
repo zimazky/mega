@@ -1,27 +1,69 @@
 /*
- * Arduino UNO
+ * Arduino MEGA
  * 
+ *                                                         Digital D21/SCL
+ *                                                         Digital D20/SCA
+ *                                                                 AREF
+ *                                                                 GND
+ *                    
+ *                    NC                                   Digital ~D13      Eth SCK
+ *                    IOREF                                Digital ~D12      Eth MISO
+ *                    RESET                                Digital ~D11      Eth MOSI
+ *                    +3V3                                 Digital ~D10      Eth SS for Ethernet controller
+ *                    +5V                                  Digital ~D9       Zone2 Data            Green
+ *                    GND                                  Digital ~D8       Zone2 LED             Blue
+ * Brown              GND
+ *                    VIN                                  Digital ~D7       Zone2 Btn             Blue/W
+ *                                                         Digital ~D6       Zone3 Data            Green
+ * Oran/W Zone1 Pwr   A0/D54  Analog                       Digital ~D5       Zone1 Btn             Blue/W
+ * Gree/W Zone2 Pwr   A1/D55  Analog                       Digital ~D4       Eth SS for SD-card
+ * Green  Hydro Data  A2/D56  Analog                       Digital ~D3       Zone1 LED             Blue
+ * Blue   Hydro Pump  A3/D57  Analog                       Digital ~D2       Zone1 Data            Green
+ * Bl/W Irrigate Pwr  A4/D58  Analog                       Digital ~D1/TX0   XXX
+ *                    A5/D59  Analog                       Digital ~D0/RX0   XXX
+ *                    A6/D60  Analog
+ *                    A7/D61  Analog                       Digital D14/TX3   
+ *                                                         Digital D15/RX3   
+ *                    A8/D62  Analog                       Digital D16/TX2
+ *                    A9/D63  Analog                       Digital D17/RX2
+ *                    A10/D64 Analog                       Digital D18/TX1
+ *                    A11/D65 Analog                       Digital D19/RX1
+ *                    A12/D66 Analog             Digital Input/I2C D20/SDA
+ *                    A13/D67 Analog             Digital Input/I2C D21/SCL
+ *                    A14/D68 Analog
+ *                    A15/D69 Analog
+ *                    
+ *                            G D D D D D D D D D D D D D D D D 5 
+ *                            N 5 5 4 4 4 4 4 3 3 3 3 3 2 2 2 2 V
+ *                            D 2 0 8 6 4 2 0 8 6 4 2 0 8 6 4 2
+ *                      
+ *                            G D D D D D D D D D D D D D D D D 5 
+ *                            N 5 5 4 4 4 4 4 3 3 3 3 3 2 2 2 2 V
+ *                            D 3 1 9 7 5 3 1 9 7 5 3 1 9 7 5 3
  */
 
 #include <SPI.h>
 #include <SD.h>
 #include "zone.h"
 #include "hk3022.h"
+#include "irrigate.h"
 #include "ticker.h"
+#include "datetime.h"
 #include "webserver.h"
+#include "utils.h"
 
-#define NZ 3 // Число действующих зон
+#define NZ 2 // Число действующих зон
 
 //DHT22_pin, LED_pin, BUTTON_pin, POWER_pin, Tc, dT, id
 //DHT22_pin, id
+//zone z[NZ] = {zone(2,3,5,A0,300,1,'1'),zone(9,8,7,A1,300,1,'2'),zone(6,'3')};
+zone z[NZ] = {zone(9,8,7,A1,300,1,'2'),zone(6,'3')};
 
-zone z[NZ] = {zone(9,8,7,A0,300,5,'1'),zone(2,3,5,A1,300,1,'2'),zone(6,'3')};
-//zone z[NZ] = {zone(2,3,5,A1,300,1,'2'),zone(6,'3')};
-
-hk3022 hydro = hk3022(A2);
+hk3022 hydro = hk3022(A2, A3);
+irrigate izone = irrigate(A4);
 ticker tck;
 webserver web;
-const char _version[] = "20220101"; // Версия прошивки 27084 bytes
+const char _version[] = "20220830"; // Версия прошивки 29654 bytes
 
 void setup() {
   Serial.begin(9600);
@@ -43,10 +85,10 @@ void setup() {
   readconf();           // Читаем конфигурацию
 }
 
-
 void loop() {
   for(int i=0; i<NZ; i++) { z[i].handler(); }
   web.handler(ajax_handler);
+  hydro.handler(tck.unixtime);
   tck.handler5s( h5s );
 }
 
@@ -64,10 +106,12 @@ void h5s() {
   Serial.print(tck._t); Serial.println(" ");
   Serial.println(hydro.pressure);
   */
-  
+  Serial.print("lc="); Serial.println(tck.loopcounter);
+
   for(int i=0; i<NZ; i++) { z[i].handler5s(); }
 
-  hydro.read();
+  hydro.handler5s(tck.unixtime);
+  izone.handler5s(tck.unixtime, (hydro.mode&3) && tck._is_sync );
   
   if(tck.starttime) { // Если время было синхронизировано
     char f[20] = {'l','o','g','/',0};
@@ -92,6 +136,15 @@ void h5s() {
     if (logfile) {
       if (logfile.size() == 0) hydro.logdiff(&logfile,tck.unixtime,true);
       else hydro.logdiff(&logfile,tck.unixtime,_fe);
+      logfile.close();
+    }
+
+    // вывод логов по системе автополива log/YYYYMMDD.i0
+    f[13] = 'i'; f[14] = '0'; 
+    logfile = SD.open(f, FILE_WRITE);
+    if (logfile) {
+      if (logfile.size() == 0) izone.logdiff(&logfile,tck.unixtime,true);
+      else izone.logdiff(&logfile,tck.unixtime,_fe);
       logfile.close();
     }
     
@@ -195,43 +248,23 @@ void ajax_handler(EthernetClient client, char* req) {
     client.println(httpconnectionclose);
     client.println();
 
-    // устаревший вариант вывода
-    // 0:t1, 1:tc1, 2:h1, 3:m1, 4:p1, 5:dt1, 6:s1, 
-    // 7:t2, 8:tc2, 9:h2, 10:m2, 11:p2, 12:dt2, 13:s2,
-    // 14:unixtime, 15:starttime, 16:lastsynctime, 17:lastsyncdelta, 18:lastsyncinterval
-
     // новый вариант вывода
     // 0:version, 1:numofzones,
     // 2:unixtime, 3:starttime, 4:lastsynctime, 5:lastsyncdelta, 6:lastsyncinterval, 7:tickcounter
-    // 8:t1, 9:tc1, 10:h1, 11:m1, 12:p1, 13:dt1, 14:s1, 
-    // 15:t2, 16:tc2, 17:h2, 18:m2, 19:p2, 20:dt2, 21:s2,
-    // 22:t3, 23:tc3, 24:h3, 25:m3, 26:p3, 27:dt3, 28:s3,
-    // 29:p_hydro
+    // 8:loopcounter
 
-    //client.print(_version); 
-    client.print(_version); client.print(';');
-      // 0.версия прошивки
-      // 1.число зон
-    client.print(NZ); client.print(';');
+    // 0.версия прошивки
+    client.print(_version);
+    // 1.число зон
+    print_with_semicolon(&client,NZ);
+    // 2-8 параметры тикера
     tck.print(&client);
-      // 2.текущее время
-      // 3.время запуска
-      // 4.время последней синхронизации
-      // 5.ошибка последней синхронизации
-      // 6.последний интервал синхронизации
-      // 7.счетчик миллисекунд контроллера
-    for(int i=0;i<NZ;i++) {
-      z[i].print(&client);
-      // 8. температура1 t1
-      // 9. заданная температура1 tc1
-      // 10. влажность1 h1
-      // 11. режим работы1 m1
-      // 12. подача энергии p1
-      // 13. гистерезис температуры dt1
-      // 14. состояние датчика s1
-    }
+    // зоны термоконтроллера
+    for(int i=0;i<NZ;i++) z[i].print(&client);
+    // параметры системы водоснабжения
     hydro.print(&client);
-      // 29. давление в системе водоснабжения
+    // параметры зон полива
+    izone.print(&client);
     client.println();
     return;
   }
