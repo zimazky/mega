@@ -25,6 +25,12 @@ public:
   void handler5s( void (*f)() );
   void sync();
   void print(Stream* s);     // Вывод данных в поток
+  void logdiff_n(Stream* s, bool f); // Вывод логов в поток в новом формате.
+
+private:
+  // переменные для вывода разностных логов  
+  uint32_t _ut;
+
 };
 
 #endif

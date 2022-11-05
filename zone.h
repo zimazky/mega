@@ -31,6 +31,8 @@ public:
   void print(Stream* s);      // Вывод данных в поток
   void writeconf(Stream* s);  // Запись конфигурации в поток.
   void logdiff(Stream* s, uint32_t unixtime, bool f);  // Вывод логов в поток.
+  bool logdiff_n(Stream* s, bool f); // Вывод логов в поток в новом формате.
+
 
 private:
   button* _btn = 0; // используем также как определение типа датчика (null - без управления)

@@ -116,7 +116,7 @@ void h5s() {
   if(tck.starttime) { // Если время было синхронизировано
     char f[20] = {'l','o','g','/',0};
     yyyymmdd(&f[4],tck.unixtime);
-    
+    /*
     // вывод логов по температурным зонам
     f[12] = '.'; f[13] = 'z'; f[15] = 0; 
     for(int i=0; i<NZ; i++) {
@@ -147,10 +147,38 @@ void h5s() {
       else izone.logdiff(&logfile,tck.unixtime,_fe);
       logfile.close();
     }
-    
-    _fe = false;
-  }
+    */
 
+    // вывод логов
+    f[12] = '.'; f[13] = 'l'; f[14] = 0;
+    File logfile = SD.open(f, FILE_WRITE);
+    if (logfile) {
+      if (logfile.size() == 0) _fe = true;
+      bool is_print = false;
+      // вывод логов по температурным зонам
+      for(int i=0; i<NZ; i++) {
+        // Лог зоны i
+        logfile.print('Z');
+        logfile.print(z[i].id);
+        logfile.print(';');
+        is_print |= z[i].logdiff_n(&logfile,_fe);
+        }
+      }
+      // вывод логов по системе водоснабжения
+      logfile.print("H0;");
+      is_print |= hydro.logdiff_n(&logfile,_fe);
+      // вывод логов по системе автополива
+      logfile.print("I0;");
+      is_print |= izone.logdiff_n(&logfile,_fe);
+      // вывод логов тикера
+      logfile.print("T0;");
+      if(is_print) {
+        tck.logdiff_n(&logfile,_fe);
+        _fe = false; // далее пишем в разностном виде
+      }
+      logfile.close();
+    }
+  }
 }
 
 ///////////////////////////////////////////////////////////

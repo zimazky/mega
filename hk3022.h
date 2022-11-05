@@ -35,6 +35,8 @@ public:
   void print(Stream* s);      // Вывод данных в поток
   void writeconf(Stream* s);  // Запись конфигурации в поток
   void logdiff(Stream* s, uint32_t unixtime, bool f);  // Вывод логов в поток
+  bool logdiff_n(Stream* s, bool f); // Вывод логов в поток в новом формате.
+
     
 private:
   uint8_t _pin;
