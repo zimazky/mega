@@ -63,7 +63,7 @@ hk3022 hydro = hk3022(A2, A3);
 irrigate izone = irrigate(A4);
 ticker tck;
 webserver web;
-const char _version[] = "20221105"; // Версия прошивки 29654 bytes
+const char _version[] = "20221105"; // Версия прошивки 30196 bytes
 
 void setup() {
   Serial.begin(9600);
@@ -158,20 +158,13 @@ void h5s() {
       // вывод логов по температурным зонам
       for(int i=0; i<NZ; i++) {
         // Лог зоны i
-        logfile.print('Z');
-        logfile.print(z[i].id);
-        logfile.print(';');
         is_print |= z[i].logdiff_n(&logfile,_fe);
-        }
       }
       // вывод логов по системе водоснабжения
-      logfile.print("H0;");
       is_print |= hydro.logdiff_n(&logfile,_fe);
       // вывод логов по системе автополива
-      logfile.print("I0;");
       is_print |= izone.logdiff_n(&logfile,_fe);
       // вывод логов тикера
-      logfile.print("T0;");
       if(is_print) {
         tck.logdiff_n(&logfile,_fe);
         _fe = false; // далее пишем в разностном виде
