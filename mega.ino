@@ -154,6 +154,7 @@ void h5s() {
     File logfile = SD.open(f, FILE_WRITE);
     if (logfile) {
       if (logfile.size() == 0) _fe = true;
+      if (_fe) logfile.println('F'); //признак полной записи в следующей строке
       bool is_print = false;
       // вывод логов по температурным зонам
       for(int i=0; i<NZ; i++) {

@@ -30,6 +30,7 @@ public:
 private:
   // переменные для вывода разностных логов  
   uint32_t _ut;
+  uint16_t _loopcounter;
 
 };
 

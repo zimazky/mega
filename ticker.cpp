@@ -155,9 +155,8 @@ void ticker::print(Stream* s) {
 //   - разностная запись (записывается разность между текущим значением и предыдущим).
 // Порядок полей при выводе событий:
 // 1. Признак тикера ('T')
-// 2. Признак типа записи ('F' - полная, 'C' - разностная)
-// 3. Метка времени. Тип unixtime, выводится разница с предыдущим значением в потоке.
-// 4. Счетчик циклов выполнения (не реализовано)
+// 2. Метка времени. Тип unixtime, выводится разница с предыдущим значением в потоке.
+// 3. Счетчик циклов выполнения
 //-------------------------------------------------------------------------------------------------
 
 void ticker::logdiff_n(Stream* s, bool f) {
@@ -166,15 +165,11 @@ void ticker::logdiff_n(Stream* s, bool f) {
   // признак тикера
   s->print('T');
   // полная запись
-  if(f) {
-    _ut = 0;
-    print_with_semicolon(s, 'F');
-  }
-  else print_with_semicolon(s, 'C'); // сжатая (разностная) запись
+  if(f) { _ut = 0; _loopcounter = 0; }
   // unixtime
   print_with_semicolon(s, unixtime-_ut); _ut = unixtime;
   // loopcounter
-  print_with_semicolon(s, loopcounter);
+  print_with_semicolon(s, loopcounter-_loopcounter); _loopcounter = loopcounter;
   // конец строки
   s->println();
 }
