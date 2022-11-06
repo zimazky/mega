@@ -218,7 +218,8 @@ bool hk3022::logdiff_n(Stream* s, bool f) {
   if(f) { _ut = 0; _p = 0; _pw = 0; _m = 0; _hl = 0; _ll = 0; _dl = 0; _pit = 0; _prl = 0; _ri = 0; b = 128; }
   
   // блок определения байта флагов
-  if(pressure != _p) b += 3; // выводим только в виде непреобразованных данных (флаг 1+2)
+  if(abs(pressure-_p) > 1) b += 3; // выводим только в виде непреобразованных данных (флаг 1+2)
+                                    // фильтруем вывод изменений, выводим если разница больше 1
   if((poweron != _pw) || (mode != _m)) b += 4;
   if((hilimit != _hl) || (lolimit != _ll) || (drylimit != _dl)) b += 8;
   if((pumpinittime != _pit) || (pumprunlimit != _prl) || (retryinterval != _ri)) b += 16;
