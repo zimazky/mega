@@ -34,9 +34,11 @@ void hk3022::handler(uint32_t unixtime) {
   int16_t p1 = analogRead(_pin); delay(5);
   p1 += analogRead(_pin); delay(5);
   p1 += analogRead(_pin);
-  int16_t m = p1%3;
-  pressure = p1/3;
-  if(m >= 2)  pressure += 1;
+
+  //int16_t m = p1%3;
+  pressure = (p1 + _pre)/6;
+  //if(m >= 2)  pressure += 1;
+  _pre = p1;
 
   poweron = false;
   switch(mode) {
@@ -215,11 +217,12 @@ bool hk3022::logdiff_n(Stream* s, bool f) {
   
   uint8_t b = 0;
   // полная запись
-  if(f) { _ut = 0; _p = 0; _pw = 0; _m = 0; _hl = 0; _ll = 0; _dl = 0; _pit = 0; _prl = 0; _ri = 0; b = 128; }
+  if(f) { _ut = 0; _p = 0; _dp = 0; _pw = 0; _m = 0; _hl = 0; _ll = 0; _dl = 0; _pit = 0; _prl = 0; _ri = 0; b = 128; }
   
   // блок определения байта флагов
-  if(abs(pressure-_p) > 1) b += 3; // выводим только в виде непреобразованных данных (флаг 1+2)
-                                    // фильтруем вывод изменений, выводим если разница больше 1
+  uint16_t dp = pressure - _p;
+  if(abs(dp)>1 || (dp!=0 && (dp+_dp)!=0)) b += 3; // выводим только в виде непреобразованных данных (флаг 1+2)
+                                       // фильтруем чтобы не было дребезга 
   if((poweron != _pw) || (mode != _m)) b += 4;
   if((hilimit != _hl) || (lolimit != _ll) || (drylimit != _dl)) b += 8;
   if((pumpinittime != _pit) || (pumprunlimit != _prl) || (retryinterval != _ri)) b += 16;
@@ -231,7 +234,7 @@ bool hk3022::logdiff_n(Stream* s, bool f) {
     // флаги
     print_with_semicolon(s, b);
     // давление
-    if( b & 1) { print_with_semicolon(s, pressure-_p); _p = pressure; }
+    if( b & 1) { print_with_semicolon(s, _dp = pressure-_p); _p = pressure; }
     // режим работы и подача мощности
     if( b & 4) { print_with_semicolon(s, mode+(poweron<<3)); _pw = poweron; _m = mode; }
     // значения параметров давления (hilimit; lolimit; drylimit)
