@@ -156,6 +156,7 @@ void ticker::print(Stream* s) {
 // Порядок полей при выводе событий:
 // 1. Признак тикера ('T')
 // 2. Метка времени. Тип unixtime, выводится разница с предыдущим значением в потоке.
+//    (в новой версии без разделителя перед флагом)
 // 3. Счетчик циклов выполнения
 //-------------------------------------------------------------------------------------------------
 
@@ -167,7 +168,7 @@ void ticker::logdiff_n(Stream* s, bool f) {
   // полная запись
   if(f) { _ut = 0; _loopcounter = 0; }
   // unixtime
-  print_with_semicolon(s, unixtime-_ut); _ut = unixtime;
+  s->print(unixtime-_ut); _ut = unixtime;
   // loopcounter
   print_with_semicolon(s, loopcounter-_loopcounter); _loopcounter = loopcounter;
   // конец строки

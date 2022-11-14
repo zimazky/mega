@@ -36,6 +36,7 @@ void hk3022::handler(uint32_t unixtime) {
   p1 += analogRead(_pin);
 
   //int16_t m = p1%3;
+  //pressure = p1/3;
   pressure = (p1 + _pre)/6;
   //if(m >= 2)  pressure += 1;
   _pre = p1;
@@ -196,7 +197,7 @@ void hk3022::logdiff(Stream* s, uint32_t unixtime, bool f) {
 //   - разностная запись (записывается разность между текущим значением и предыдущим).
 // Порядок полей при выводе событий:
 // 1. Номер зоны ('H' + номер)
-// 2. Флаги событий int8_t
+// 2. Флаги событий int8_t (в новой версии без разделителя перед флагом)
 //    1 - Изменение фактического давления
 //    2 - Признак передачи данных без преобразования (0В=0, 5В=1023)
 //    4 - Режим работы и подача мощности на насос
@@ -220,7 +221,7 @@ bool hk3022::logdiff_n(Stream* s, bool f) {
   if(f) { _ut = 0; _p = 0; _dp = 0; _pw = 0; _m = 0; _hl = 0; _ll = 0; _dl = 0; _pit = 0; _prl = 0; _ri = 0; b = 128; }
   
   // блок определения байта флагов
-  uint16_t dp = pressure - _p;
+  int16_t dp = pressure - _p;
   if(abs(dp)>1 || (dp!=0 && (dp+_dp)!=0)) b += 3; // выводим только в виде непреобразованных данных (флаг 1+2)
                                        // фильтруем чтобы не было дребезга 
   if((poweron != _pw) || (mode != _m)) b += 4;
@@ -232,9 +233,9 @@ bool hk3022::logdiff_n(Stream* s, bool f) {
     // номер зоны
     s->print("H0");
     // флаги
-    print_with_semicolon(s, b);
+    s->print(b);
     // давление
-    if( b & 1) { print_with_semicolon(s, _dp = pressure-_p); _p = pressure; }
+    if( b & 1) { print_with_semicolon(s, _dp = dp); _p = pressure; }
     // режим работы и подача мощности
     if( b & 4) { print_with_semicolon(s, mode+(poweron<<3)); _pw = poweron; _m = mode; }
     // значения параметров давления (hilimit; lolimit; drylimit)
