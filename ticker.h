@@ -18,13 +18,20 @@ public:
   uint32_t increment = 4958;  // 5 секунд, скорректировано с учетом рассинхронизации (42 миллмсекунды за 5 секунд)
   uint32_t unixtime = 0;
   uint32_t starttime = 0;
-  uint16_t _lc = 0;           // текущий счетчик циклов в интервале 5 сек
-  uint16_t loopcounter = 0;   // счетчик циклов за последний интервал 5 сек
+  int16_t _lc = 0;           // текущий счетчик циклов в интервале 5 сек
+  int16_t loopcounter = 0;   // счетчик циклов за последний интервал 5 сек
   
   void begin();
   void handler5s( void (*f)() );
   void sync();
   void print(Stream* s);     // Вывод данных в поток
+  void logdiff_n(Stream* s, bool f); // Вывод логов в поток в новом формате.
+
+private:
+  // переменные для вывода разностных логов  
+  uint32_t _ut;
+  int16_t _loopcounter;
+
 };
 
 #endif

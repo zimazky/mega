@@ -63,7 +63,7 @@ hk3022 hydro = hk3022(A2, A3);
 irrigate izone = irrigate(A4);
 ticker tck;
 webserver web;
-const char _version[] = "20220830"; // Версия прошивки 29654 bytes
+const char _version[] = "20221114"; // Версия прошивки 30252 bytes
 
 void setup() {
   Serial.begin(9600);
@@ -116,7 +116,7 @@ void h5s() {
   if(tck.starttime) { // Если время было синхронизировано
     char f[20] = {'l','o','g','/',0};
     yyyymmdd(&f[4],tck.unixtime);
-    
+    /*
     // вывод логов по температурным зонам
     f[12] = '.'; f[13] = 'z'; f[15] = 0; 
     for(int i=0; i<NZ; i++) {
@@ -147,10 +147,32 @@ void h5s() {
       else izone.logdiff(&logfile,tck.unixtime,_fe);
       logfile.close();
     }
-    
-    _fe = false;
-  }
+    */
 
+    // вывод логов
+    f[12] = '.'; f[13] = 'l'; f[14] = 0;
+    File logfile = SD.open(f, FILE_WRITE);
+    if (logfile) {
+      if (logfile.size() == 0) _fe = true;
+      if (_fe) logfile.println('F'); //признак полной записи в следующей строке
+      bool is_print = false;
+      // вывод логов по температурным зонам
+      for(int i=0; i<NZ; i++) {
+        // Лог зоны i
+        is_print |= z[i].logdiff_n(&logfile,_fe);
+      }
+      // вывод логов по системе водоснабжения
+      is_print |= hydro.logdiff_n(&logfile,_fe);
+      // вывод логов по системе автополива
+      is_print |= izone.logdiff_n(&logfile,_fe);
+      // вывод логов тикера
+      if(is_print) {
+        tck.logdiff_n(&logfile,_fe);
+        _fe = false; // далее пишем в разностном виде
+      }
+      logfile.close();
+    }
+  }
 }
 
 ///////////////////////////////////////////////////////////
@@ -181,7 +203,7 @@ void h5s() {
 class ajax_req_parser {
 public:
   uint8_t state = 0;  // состояние парсера
-  uint8_t z = 0;      // номер зоны (0 - не определена, z <= NZ)
+  char z = 0;         // идентификатор зоны (0 - не определена)
   int16_t x = 0;      // параметр (температура представляется целым числом t*10)
   char* parstr;  
 
@@ -201,10 +223,7 @@ public:
         break;
       }
       if( state == AJAX_S ) {
-//        if( c == '1' ) { state = AJAX_SN; z = 1; } 
-//        if( c == '2' ) { state = AJAX_SN; z = 2; }
-        state = AJAX_SN; z = c - '0';
-        if( z > NZ ) z = 0; // если неверное значение номера зоны, сбрасываем
+        state = AJAX_SN; z = c;
         continue;
       }
       if( state == AJAX_SN ) {
@@ -272,11 +291,18 @@ void ajax_handler(EthernetClient client, char* req) {
   // snt:xx.x Задание температуры
   /////////////////////////////////////////
   
-  // !!!!!!!!!!!!!!!!!!!!!!!!ДОБАВИТЬ ПРОВЕРКУ ПО ajaxp.z-1!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  
-  if( ajaxp.state == AJAX_SNT_END ) {
+  // Поиск индекса зоны
+  int8_t zindex = -1;
+  for(int8_t i=0;i<NZ;i++) {
+    if(z[i].id == ajaxp.z) {
+      zindex=i;
+      break;
+    }
+  }
+
+  if( zindex != -1 && ajaxp.state == AJAX_SNT_END ) {
     if( ajaxp.z == 0 ) return; // зона не определена
-    z[ajaxp.z-1].target_temperature = ajaxp.x;
+    z[zindex].target_temperature = ajaxp.x;
     client.println(http200);
     client.println(httpaccesscontrol);
     client.println(httpconnectionclose);
@@ -287,9 +313,9 @@ void ajax_handler(EthernetClient client, char* req) {
   /////////////////////////////////////////
   // snm:x Задание режима
   /////////////////////////////////////////
-  if( ajaxp.state == AJAX_SNM_END ) {
+  if( zindex != -1 && ajaxp.state == AJAX_SNM_END ) {
     if( ajaxp.z == 0 ) return; // зона не определена
-    z[ajaxp.z-1].mode = ajaxp.x;
+    z[zindex].mode = ajaxp.x;
     client.println(http200);
     client.println(httpaccesscontrol);
     client.println(httpconnectionclose);
@@ -297,7 +323,7 @@ void ajax_handler(EthernetClient client, char* req) {
     writeconf();
     return;
   }
-  /*
+  
   /////////////////////////////////////////
   // l:/xxxxx/xxxx Запрос списка файлов в директории /xxxxx/xxxx. Выводим с разделителем ';'
   /////////////////////////////////////////
@@ -350,7 +376,7 @@ void ajax_handler(EthernetClient client, char* req) {
     client.println();
     return;
   }
-*/
+
   client.println(http501);
   client.println();
   

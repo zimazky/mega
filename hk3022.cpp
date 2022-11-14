@@ -34,9 +34,12 @@ void hk3022::handler(uint32_t unixtime) {
   int16_t p1 = analogRead(_pin); delay(5);
   p1 += analogRead(_pin); delay(5);
   p1 += analogRead(_pin);
-  int16_t m = p1%3;
-  pressure = p1/3;
-  if(m >= 2)  pressure += 1;
+
+  //int16_t m = p1%3;
+  //pressure = p1/3;
+  pressure = (p1 + _pre)/6;
+  //if(m >= 2)  pressure += 1;
+  _pre = p1;
 
   poweron = false;
   switch(mode) {
@@ -145,7 +148,7 @@ void hk3022::writeconf(Stream* s) {
 // 5. Заданные значения параметров давления (hilimit; lolimit; drylimit)
 // 6. Заданные значения временных параметров (pumpinittime; pumprunlimit; retryinterval)
 //-------------------------------------------------------------------------------------------------
-
+/*
 void hk3022::logdiff(Stream* s, uint32_t unixtime, bool f) {
   
   uint8_t b = 0;
@@ -186,7 +189,75 @@ void hk3022::logdiff(Stream* s, uint32_t unixtime, bool f) {
     s->println();
   }
 }
+*/
 
+//-------------------------------------------------------------------------------------------------
+// Лог давления в системе водоснабжения с выводом в единый лог-файл с новым форматом:
+// Строка представляет собой событие. Событие может выводиться двумя типами записей: 
+//   - полная запись (первая запись в файле лога или после перезагрузки);
+//   - разностная запись (записывается разность между текущим значением и предыдущим).
+// Порядок полей при выводе событий:
+// 1. Номер зоны ('H' + номер)
+// 2. Флаги событий int8_t (в новой версии без разделителя перед флагом)
+//    1 - Изменение фактического давления
+//    2 - Признак передачи данных без преобразования (0В=0, 5В=1023)
+//    4 - Режим работы и подача мощности на насос
+//        (0 - выключен, 1 - включено слежение до запуска насоса, 2 - включено слежение после запуска насоса, 4 - сухой ход, 8 - бит подачи мощности)
+//    8 - Изменились настройки параметров давления (hilimit, lolimit, drylimit)
+//   16 - Изменились настройки временных параметров (pumpinittime, pumprunlimit, retryinterval)
+//  128 - Признак полной записи (выводятся все поля в виде полного значения)
+// Далее в соответствии с установленными битами флагов событий выводятся параметры:
+// 3. Фактическое давление. Тип int16_t, выводится разница с предыдущим значением в потоке.
+// 4. Режим работы и подача мощности. Тип int8_t, выводится значение (0 - отключено слежение, 1 - включено слежение до запуска насоса, 2 - слежение после запуска насоса, 3 - сухой ход) += 4 если включен насос.
+// 5. Заданные значения параметров давления (hilimit; lolimit; drylimit)
+// 6. Заданные значения временных параметров (pumpinittime; pumprunlimit; retryinterval)
+// 
+// Возвращает true если был вывод (false если не было изменеий и вывод не производился)
+//-------------------------------------------------------------------------------------------------
+
+bool hk3022::logdiff_n(Stream* s, bool f) {
+  
+  uint8_t b = 0;
+  // полная запись
+  if(f) { _ut = 0; _p = 0; _dp = 0; _pw = 0; _m = 0; _hl = 0; _ll = 0; _dl = 0; _pit = 0; _prl = 0; _ri = 0; b = 128; }
+  
+  // блок определения байта флагов
+  int16_t dp = pressure - _p;
+  if(abs(dp)>1 || (dp!=0 && (dp+_dp)!=0)) b += 3; // выводим только в виде непреобразованных данных (флаг 1+2)
+                                       // фильтруем чтобы не было дребезга 
+  if((poweron != _pw) || (mode != _m)) b += 4;
+  if((hilimit != _hl) || (lolimit != _ll) || (drylimit != _dl)) b += 8;
+  if((pumpinittime != _pit) || (pumprunlimit != _prl) || (retryinterval != _ri)) b += 16;
+
+  // блок вывода
+  if( b ) {
+    // номер зоны
+    s->print("H0");
+    // флаги
+    s->print(b);
+    // давление
+    if( b & 1) { print_with_semicolon(s, _dp = dp); _p = pressure; }
+    // режим работы и подача мощности
+    if( b & 4) { print_with_semicolon(s, mode+(poweron<<3)); _pw = poweron; _m = mode; }
+    // значения параметров давления (hilimit; lolimit; drylimit)
+    if( b & 8) { 
+      print_with_semicolon(s, hilimit);
+      print_with_semicolon(s, lolimit);
+      print_with_semicolon(s, drylimit);
+      _hl = hilimit; _ll = lolimit; _dl = drylimit;
+    }
+    // значения временных параметров (pumpinittime; pumprunlimit; retryinterval)
+    if( b & 16) { 
+      print_with_semicolon(s, pumpinittime);
+      print_with_semicolon(s, pumprunlimit);
+      print_with_semicolon(s, retryinterval);
+      _pit = pumpinittime; _prl = pumprunlimit; _ri = retryinterval;
+    }
+    s->print(';');
+    return true;
+  }
+  return false;
+}
 //
 // END OF FILE
 //
