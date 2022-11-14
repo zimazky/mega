@@ -63,7 +63,7 @@ hk3022 hydro = hk3022(A2, A3);
 irrigate izone = irrigate(A4);
 ticker tck;
 webserver web;
-const char _version[] = "20221114"; // Версия прошивки 30246 bytes
+const char _version[] = "20221114"; // Версия прошивки 30252 bytes
 
 void setup() {
   Serial.begin(9600);
@@ -203,7 +203,7 @@ void h5s() {
 class ajax_req_parser {
 public:
   uint8_t state = 0;  // состояние парсера
-  uint8_t z = 0;      // номер зоны (0 - не определена, z <= NZ)
+  char z = 0;         // идентификатор зоны (0 - не определена)
   int16_t x = 0;      // параметр (температура представляется целым числом t*10)
   char* parstr;  
 
@@ -223,10 +223,7 @@ public:
         break;
       }
       if( state == AJAX_S ) {
-//        if( c == '1' ) { state = AJAX_SN; z = 1; } 
-//        if( c == '2' ) { state = AJAX_SN; z = 2; }
-        state = AJAX_SN; z = c - '0';
-        if( z > NZ ) z = 0; // если неверное значение номера зоны, сбрасываем
+        state = AJAX_SN; z = c;
         continue;
       }
       if( state == AJAX_SN ) {
@@ -294,11 +291,18 @@ void ajax_handler(EthernetClient client, char* req) {
   // snt:xx.x Задание температуры
   /////////////////////////////////////////
   
-  // !!!!!!!!!!!!!!!!!!!!!!!!ДОБАВИТЬ ПРОВЕРКУ ПО ajaxp.z-1!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  
-  if( ajaxp.state == AJAX_SNT_END ) {
+  // Поиск индекса зоны
+  int8_t zindex = -1;
+  for(int8_t i=0;i<NZ;i++) {
+    if(z[i].id == ajaxp.z) {
+      zindex=i;
+      break;
+    }
+  }
+
+  if( zindex != -1 && ajaxp.state == AJAX_SNT_END ) {
     if( ajaxp.z == 0 ) return; // зона не определена
-    z[ajaxp.z-1].target_temperature = ajaxp.x;
+    z[zindex].target_temperature = ajaxp.x;
     client.println(http200);
     client.println(httpaccesscontrol);
     client.println(httpconnectionclose);
@@ -309,9 +313,9 @@ void ajax_handler(EthernetClient client, char* req) {
   /////////////////////////////////////////
   // snm:x Задание режима
   /////////////////////////////////////////
-  if( ajaxp.state == AJAX_SNM_END ) {
+  if( zindex != -1 && ajaxp.state == AJAX_SNM_END ) {
     if( ajaxp.z == 0 ) return; // зона не определена
-    z[ajaxp.z-1].mode = ajaxp.x;
+    z[zindex].mode = ajaxp.x;
     client.println(http200);
     client.println(httpaccesscontrol);
     client.println(httpconnectionclose);
