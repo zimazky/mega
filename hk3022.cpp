@@ -35,11 +35,11 @@ void hk3022::handler(uint32_t unixtime) {
   p1 += analogRead(_pin); delay(5);
   p1 += analogRead(_pin);
 
-  //int16_t m = p1%3;
-  //pressure = p1/3;
-  pressure = (p1 + _pre)/6;
-  //if(m >= 2)  pressure += 1;
-  _pre = p1;
+  int16_t m = p1%3;
+  pressure = p1/3;
+  //pressure = (p1 + _pre)/6;
+  if(m >= 2)  pressure += 1;
+  //_pre = p1;
 
   poweron = false;
   switch(mode) {
