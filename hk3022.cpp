@@ -24,7 +24,7 @@ hk3022::hk3022( uint8_t pin, uint8_t pw_pin ) {
   pinMode(_pw_pin, OUTPUT);
 }
 
-void hk3022::handler(uint32_t unixtime) {
+void hk3022::handler(uint32_t unixtime, bool is_timer_synced) {
   //if( _btn == 0 ) return; // выходим, если нет кнопки управления
   // проверяем кнопку очень часто
   //if( _btn->state() && mode==0 ) mode = 1;
@@ -42,29 +42,32 @@ void hk3022::handler(uint32_t unixtime) {
   //_pre = p1;
 
   poweron = false;
-  switch(mode) {
-    case 0: // Состояние слежения выключено
-      poweron = false;
-      break;
-    case 1: // Состояние слежения до запуска насоса
-      if( pressure < lolimit ) { poweron = true; mode = 2; beginpumpon = unixtime; } // давление упало ниже нижней границы, запуск насоса
-      else poweron = false; // проверяем, что мощность не подается
-      break;
-    case 2: // Состояние слежения после запуска насоса
-      if( pressure >= hilimit ) { poweron = false; mode = 1; } // давление достигло заданного значения, остановка насоса
-      else { // давление не достигло заданного значения
-        int16_t runtime = unixtime - beginpumpon;
-        if( (runtime > pumprunlimit) || ((runtime > pumpinittime) && (pressure < drylimit)) ) { 
-          // останавливаем насос из-за превышения допустимого времени работы или недостаточного давления, переход в режим сухого хода
-          poweron = false; mode = 4; begindrymode = unixtime;
+  if(is_timer_synced) {
+    switch(mode) {
+      case 0: // Состояние слежения выключено
+        poweron = false;
+        break;
+      case 1: // Состояние слежения до запуска насоса
+        if( pressure < lolimit ) { poweron = true; mode = 2; beginpumpon = unixtime; } // давление упало ниже нижней границы, запуск насоса
+        else poweron = false; // проверяем, что мощность не подается
+        break;
+      case 2: // Состояние слежения после запуска насоса
+        if( pressure >= hilimit ) { poweron = false; mode = 1; } // давление достигло заданного значения, остановка насоса
+        else { // давление не достигло заданного значения
+          int16_t runtime = unixtime - beginpumpon;
+          if( (runtime > pumprunlimit) || ((runtime > pumpinittime) && (pressure < drylimit)) ) { 
+            // останавливаем насос из-за превышения допустимого времени работы или недостаточного давления, переход в режим сухого хода
+            poweron = false; mode = 4; begindrymode = unixtime;
+          }
+          else poweron = true;  // давление не достигло заданного значения, проверяем, что мощность подается
+          
         }
-        else poweron = true;  // давление не достигло заданного значения, проверяем, что мощность подается
-      }
-      break;
-    case 4: // Состояние сухого хода
-      if(unixtime-begindrymode >= retryinterval) { poweron = false; mode = 1; } // Подошло время повторной попытки заполнить систему (колодец мог заполнится водой)
-    default: 
-      poweron = false;
+        break;
+      case 4: // Состояние сухого хода
+        if(unixtime-begindrymode >= retryinterval) { poweron = false; mode = 1; } // Подошло время повторной попытки заполнить систему (колодец мог заполнится водой)
+      default: 
+        poweron = false;
+    }
   }
   digitalWrite(_pw_pin, poweron);
 

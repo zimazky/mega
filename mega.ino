@@ -63,7 +63,7 @@ hk3022 hydro = hk3022(A2, A3);
 irrigate izone = irrigate(A4);
 ticker tck;
 webserver web;
-const char _version[] = "20221115"; // Версия прошивки 30254 bytes
+const char _version[] = "20230821"; // Версия прошивки 29980 bytes
 
 void setup() {
   Serial.begin(9600);
@@ -88,7 +88,7 @@ void setup() {
 void loop() {
   for(int i=0; i<NZ; i++) { z[i].handler(); }
   web.handler(ajax_handler);
-  hydro.handler(tck.unixtime);
+  hydro.handler(tck.unixtime, tck._is_sync);
   tck.handler5s( h5s );
 }
 
@@ -164,7 +164,7 @@ void h5s() {
       // вывод логов по системе водоснабжения
       is_print |= hydro.logdiff_n(&logfile,_fe);
       // вывод логов по системе автополива
-      is_print |= izone.logdiff_n(&logfile,_fe);
+      // is_print |= izone.logdiff_n(&logfile,_fe);
       // вывод логов тикера
       if(is_print) {
         tck.logdiff_n(&logfile,_fe);
